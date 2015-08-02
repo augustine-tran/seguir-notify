@@ -1,0 +1,14 @@
+{
+  "logging": true,
+  "port":4001,
+  "keyspace":"seguir",
+  "postgres": {
+    "user": "postgres",
+    "database": "postgres",
+    "host": "127.0.0.1"
+  },
+  "messaging": {
+    "host": "127.0.0.1",
+    "port": 6379
+  }
+}

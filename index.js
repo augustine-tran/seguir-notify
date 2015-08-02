@@ -1,0 +1,92 @@
+var restify = require('restify');
+var bunyan = require('bunyan');
+var _ = require('lodash');
+var debug = require('debug')('seguir:notify');
+
+var defaultLogger = bunyan.createLogger({
+  name: 'seguir-notify',
+  serializers: restify.bunyan.serializers
+});
+
+function bootstrapServer (api, config, next) {
+
+  var server = restify.createServer({
+    name: 'seguir-notify',
+    version: '0.1.0',
+    log: config.logger || defaultLogger
+  });
+
+  // Default middleware
+  server.use(restify.bodyParser({mapParams: true}));
+  server.use(restify.queryParser({mapParams: false}));
+  server.use(restify.gzipResponse());
+  server.use(restify.CORS());
+  server.use(function (req, res, cb) {
+    debug(req.url, req.params, req.headers);
+    cb();
+  });
+
+  // Logging
+  server.on('after', function (request, response, route, error) {
+    var fn = error ? 'error' : 'info';
+    if (api.config.logging) {
+      request.log[fn]({req: request, res: response, route: route, err: error}, 'request');
+    }
+  });
+
+  server.get('/status', function (req, res, cb) {
+    api.auth.getAccounts(function (err, accounts) {
+      if (err) { return _error(err); }
+      var statusConfig = _.clone(config);
+      delete statusConfig.logger;
+      res.send({status: 'OK', config: statusConfig, accounts: accounts});
+      cb();
+    });
+  });
+
+  // Preflight
+  server.pre(restify.pre.sanitizePath());
+  server.pre(restify.pre.userAgentConnection());
+
+  server.get('/', function (req, res, cb) {
+    res.send({status: 'Seguir Notify'});
+    cb();
+  });
+
+  function _error (err) {
+    return new restify.HttpError(err);
+  }
+
+  require('./handlers')(api, config);
+
+  next(null, server);
+
+}
+
+/* istanbul ignore if */
+if (require.main === module) {
+
+  var config = require('./config')();
+  require('seguir')(config, function (err, api) {
+    if (err) { return process.exit(0); }
+    bootstrapServer(api, config, function (err, server) {
+      if (err) {
+        console.log('Unable to bootstrap server: ' + err.message);
+        return;
+      }
+      server.listen(config.port || 3000, function () {
+        console.log('Server %s listening at %s', server.name, server.url);
+      });
+    });
+  });
+
+} else {
+  module.exports = function (config, next) {
+    require('seguir')(config, function (err, api) {
+      if (err) {
+        return next(new Error('Unable to bootstrap API: ' + err.message));
+      }
+      return bootstrapServer(api, config, next);
+    });
+  };
+}
