@@ -48,15 +48,11 @@ function bootstrapServer (api, config, next) {
   server.pre(restify.pre.sanitizePath());
   server.pre(restify.pre.userAgentConnection());
 
-  server.get('/', function (req, res, cb) {
-    res.send({status: 'Seguir Notify'});
-    cb();
-  });
-
   function _error (err) {
     return new restify.HttpError(err);
   }
 
+  require('./routes')(server, api, config);
   require('./handlers')(api, config);
 
   next(null, server);
