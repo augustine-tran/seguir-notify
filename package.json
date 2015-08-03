@@ -7,7 +7,7 @@
     "start": "node server",
     "worker": "node server/worker",
     "lint": "semistandard",
-    "test": "istanbul cover _mocha -- -b -R spec tests/unit/* tests/acceptance/*",
+    "test": "istanbul cover _mocha -- -b -R spec tests/acceptance/*",
     "precommit": "semistandard"
   },
   "keywords": [

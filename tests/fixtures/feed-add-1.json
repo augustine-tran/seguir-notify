@@ -1,0 +1,36 @@
+{
+  "action": "feed-add",
+  "item": {
+    "item": "161e80dd-2b1b-4b6c-a9e3-5aa35433125c",
+    "type": "follow"
+  },
+  "user": {
+    "user": "cfa1f71b-7de9-4877-b5a8-6b907fcf6b18",
+    "username": "cliftonc",
+    "altid": "1",
+    "userdata": {
+      "age": "15"
+    }
+  },
+  "data": {
+    "follow": "161e80dd-2b1b-4b6c-a9e3-5aa35433125c",
+    "user": {
+      "user": "cfa1f71b-7de9-4877-b5a8-6b907fcf6b18",
+      "username": "cliftonc",
+      "altid": "1",
+      "userdata": {
+        "age": "15"
+      }
+    },
+    "user_follower": {
+      "user": "a7437111-2849-4c12-9bc3-c9ec8e5539d6",
+      "username": "phteven",
+      "altid": "2",
+      "userdata": {
+        "age": "15"
+      }
+    },
+    "since": "2015-08-03T06:31:44.328Z",
+    "visibility": "public"
+  }
+}

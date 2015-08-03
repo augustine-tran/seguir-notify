@@ -2,7 +2,7 @@ var restify = require('restify');
 
 module.exports = function (server, api, config) {
 
-  var redis = require('../db/redis')(config);
+  var model = require('../model')(config);
 
   function _error (err) {
     return new restify.HttpError(err);
@@ -14,10 +14,10 @@ module.exports = function (server, api, config) {
   });
 
   server.get('/user/:username', function (req, res, cb) {
-    var usernameKey = ['username', req.params.username].join(':');
-    redis.get(usernameKey, function (err, user) {
+    model.getUserByUsername(req.params.username, function (err, user) {
       if (err) { return _error(err); }
-      res.send({user: user});
+      user.userdata = JSON.parse(user.userdata);
+      res.send(user);
     });
   });
 
