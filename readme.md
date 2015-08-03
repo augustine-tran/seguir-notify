@@ -26,7 +26,7 @@ user:62bfd6c1-3f7a-43a4-afc3-ed12adf17d11
 
 ## Notify State
 
-This is a set of items that the user has missed since last viewing their feed.  This set is cleared when the user views their feed, it is also cleared after a configurable time period - e.g. if there is no action and / or we don't send a notification to the user within a time period to avoid memory leaks.
+This is a set of items that the user has missed since last viewing their feed.  This set is cleared when the user views their feed.
 
 ```
 notify:62bfd6c1-3f7a-43a4-afc3-ed12adf17d11 <key>
