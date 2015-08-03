@@ -1,5 +1,7 @@
 # Seguir Notify - Notification component for Seguir
 
+[![Build Status](https://travis-ci.org/cliftonc/seguir-notify.svg)](https://travis-ci.org/cliftonc/seguir-notify)
+
 [http://cliftonc.github.io/seguir/server](http://cliftonc.github.io/seguir)
 
 ## How it works
