@@ -1,30 +1,31 @@
 {
   "action": "feed-add",
   "item": {
-    "item": "ef94f049-5800-4b78-8a73-95ae636f061e",
+    "item": "ed1330b8-e15a-49f7-8d31-015328c93119",
     "type": "post"
   },
+  "isUser": false,
   "user": {
-    "user": "096f4066-1d55-447b-ac6f-ad16eac557e8",
-    "username": "ted",
-    "altid": "3",
+    "user": "da5f3307-7e61-46c6-a3ce-523991d90d74",
+    "username": "phteven",
+    "altid": "2",
     "userdata": {
       "age": "15"
     }
   },
   "data": {
-    "post": "ef94f049-5800-4b78-8a73-95ae636f061e",
-    "content": "Hello, this is a post mentioning @cliftonc, not from a follower",
+    "post": "ed1330b8-e15a-49f7-8d31-015328c93119",
+    "content": "This is a short lived post",
     "content_type": "text/html",
     "user": {
-      "user": "096f4066-1d55-447b-ac6f-ad16eac557e8",
-      "username": "ted",
-      "altid": "3",
+      "user": "444b4adf-2b51-44e9-b5d6-ffcd5520eb40",
+      "username": "cliftonc",
+      "altid": "1",
       "userdata": {
         "age": "15"
       }
     },
-    "posted": "2015-08-03T06:31:44.400Z",
+    "posted": "2015-08-03T13:59:20.108Z",
     "visibility": "public",
     "altid": null
   }

@@ -1,4 +1,5 @@
 var async = require('async');
+var _ = require('lodash');
 
 module.exports = function (config) {
 
@@ -34,13 +35,42 @@ module.exports = function (config) {
 
   var addItem = function (item, data, next) {
     var itemKey = ['item', item.item].join(':');
-    item.user = JSON.stringify(item.user);
-    redis.hmset(itemKey, data, next);
+    item.data = JSON.stringify(data);
+    redis.hmset(itemKey, item, next);
   };
 
   var addNotification = function (user, item, next) {
     var notifyKey = ['notify', user.user].join(':');
-    redis.sadd(notifyKey, item.item, next);
+    redis.rpush(notifyKey, item.item, next);
+  };
+
+  var notificationToObject = function (notifications) {
+    var fieldList = ['item', 'type', 'data'], fields, newObject, results = [];
+    while (notifications.length > 0) {
+      fields = _.take(notifications, fieldList.length);
+      notifications = _.drop(notifications, fieldList.length);
+      newObject = _.zipObject(fieldList, fields);
+      newObject.data = JSON.parse(newObject.data);
+      if (newObject.item) { results.push(newObject); }
+    };
+    return results;
+  };
+
+  var getUserStatus = function (user, next) {
+    var userKey = ['user', user].join(':');
+    var notifyKey = ['notify', user].join(':');
+    async.parallel([
+      async.apply(redis.hgetall.bind(redis), userKey),
+      async.apply(redis.llen.bind(redis), notifyKey)
+    ], next);
+  };
+
+  var getNotificationsForUser = function (user, next) {
+    var notifyKey = ['notify', user].join(':');
+    redis.sort(notifyKey, 'by', 'nosort', 'get', 'item:*->item', 'get', 'item:*->type', 'get', 'item:*->data', function (err, results) {
+      if (err) { return next(err); }
+      next(null, notificationToObject(results));
+    });
   };
 
   var clearNotifications = function (user, next) {
@@ -60,13 +90,16 @@ module.exports = function (config) {
   };
 
   return {
+    _redis: redis,
     addUser: addUser,
     getUser: getUser,
     getUserByUsername: getUserByUsername,
     addItem: addItem,
     addNotification: addNotification,
     clearItem: clearItem,
-    clearNotifications: clearNotifications
+    clearNotifications: clearNotifications,
+    getNotificationsForUser: getNotificationsForUser,
+    getUserStatus: getUserStatus
   };
 
 };

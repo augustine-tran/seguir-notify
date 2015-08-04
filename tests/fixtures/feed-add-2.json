@@ -1,36 +1,32 @@
 {
   "action": "feed-add",
   "item": {
-    "item": "161e80dd-2b1b-4b6c-a9e3-5aa35433125c",
-    "type": "follow"
+    "item": "fa602d88-5353-4ccf-8a93-272178d45b01",
+    "type": "post"
   },
+  "isUser": false,
   "user": {
-    "user": "a7437111-2849-4c12-9bc3-c9ec8e5539d6",
-    "username": "phteven",
-    "altid": "2",
+    "user": "444b4adf-2b51-44e9-b5d6-ffcd5520eb40",
+    "username": "cliftonc",
+    "altid": "1",
     "userdata": {
       "age": "15"
     }
   },
   "data": {
-    "follow": "161e80dd-2b1b-4b6c-a9e3-5aa35433125c",
+    "post": "fa602d88-5353-4ccf-8a93-272178d45b01",
+    "content": "Hello, this is a post mentioning @cliftonc, not from a follower",
+    "content_type": "text/html",
     "user": {
-      "user": "cfa1f71b-7de9-4877-b5a8-6b907fcf6b18",
-      "username": "cliftonc",
-      "altid": "1",
+      "user": "be3021d8-7f31-4c69-86ef-876c3f5cd598",
+      "username": "ted",
+      "altid": "3",
       "userdata": {
         "age": "15"
       }
     },
-    "user_follower": {
-      "user": "a7437111-2849-4c12-9bc3-c9ec8e5539d6",
-      "username": "phteven",
-      "altid": "2",
-      "userdata": {
-        "age": "15"
-      }
-    },
-    "since": "2015-08-03T06:31:44.328Z",
-    "visibility": "public"
+    "posted": "2015-08-03T13:59:20.096Z",
+    "visibility": "public",
+    "altid": null
   }
 }
