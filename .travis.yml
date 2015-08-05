@@ -6,9 +6,6 @@ node_js:
 - '0.10'
 services:
 - redis-server
-- cassandra
-addons:
-  postgresql: '9.3'
 notifications:
   hipchat:
     rooms:
