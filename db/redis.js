@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var redis = require('redis');
 
-module.exports = function client (config) {
+module.exports = function client (config, next) {
 
   var redisConfig = config && config.redis ? config.redis : {};
   redisConfig = _.defaults(config && config.redis || {}, { host: 'localhost', port: 6379, options: { } });
@@ -17,8 +17,12 @@ module.exports = function client (config) {
     // Do nothing - assume success unless proven otherwise
   });
 
-  redisClient.select(redisConfig.db || 0);
-
-  return redisClient;
+  if (redisConfig.db) {
+    redisClient.select(redisConfig.db, function () {
+      next(null, redisClient);
+    });
+  } else {
+    next(null, redisClient);
+  }
 
 };

@@ -1,9 +1,12 @@
-module.exports = function (api, config) {
+module.exports = function (api, config, redis) {
 
-  var feed = require('./feed')(api, config);
+  var feed = require('./feed')(config, redis);
 
-  api.messaging.subscribe('feed-view', feed.view);
-  api.messaging.subscribe('feed-add', feed.add);
-  api.messaging.subscribe('feed-remove', feed.remove);
+  api.messaging.listen('seguir-feed', function (msg, next) {
+    if (msg.action === 'feed-view') return feed.view(msg, next);
+    if (msg.action === 'feed-add') return feed.add(msg, next);
+    if (msg.action === 'feed-remove') return feed.remove(msg, next);
+    return next();
+  });
 
 };

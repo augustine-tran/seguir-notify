@@ -8,7 +8,7 @@ var defaultLogger = bunyan.createLogger({
   serializers: restify.bunyan.serializers
 });
 
-function bootstrapServer (api, config, next) {
+function bootstrapServer (api, config, notifier, next) {
 
   var server = restify.createServer({
     name: 'seguir-notify',
@@ -52,10 +52,13 @@ function bootstrapServer (api, config, next) {
     return new restify.HttpError(err);
   }
 
-  require('./routes')(server, api, config);
-  require('./handlers')(api, config);
-
-  next(null, server);
+  var redis = require('./db/redis');
+  redis(config, function (err, client) {
+    if (err) { return next(err); }
+    require('./routes')(server, api, config, client, notifier);
+    require('./handlers')(api, config, client);
+    next(null, server);
+  });
 
 }
 
@@ -63,9 +66,10 @@ function bootstrapServer (api, config, next) {
 if (require.main === module) {
 
   var config = require('./config')();
+  var notifier = function () {};
   require('seguir')(config, function (err, api) {
     if (err) { return process.exit(0); }
-    bootstrapServer(api, config, function (err, server) {
+    bootstrapServer(api, config, notifier, function (err, server) {
       if (err) {
         console.log('Unable to bootstrap server: ' + err.message);
         return;
@@ -77,12 +81,12 @@ if (require.main === module) {
   });
 
 } else {
-  module.exports = function (config, next) {
+  module.exports = function (config, notifier, next) {
     require('seguir')(config, function (err, api) {
       if (err) {
         return next(new Error('Unable to bootstrap API: ' + err.message));
       }
-      return bootstrapServer(api, config, next);
+      return bootstrapServer(api, config, notifier, next);
     });
   };
 }

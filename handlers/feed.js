@@ -1,33 +1,29 @@
 var async = require('async');
 
-module.exports = function (api, config) {
+module.exports = function (config, redis) {
 
-  var model = require('../model')(config);
+  var model = require('../model')(config, redis);
 
-  var view = function (msg) {
+  var view = function (msg, next) {
     async.parallel([
       async.apply(model.addUser, msg.user),
-      async.apply(model.clearNotifications, msg.user)
-    ], function (err) {
-      if (err) {};
-    });
+      async.apply(model.updateViewState, msg.user),
+      async.apply(model.clearNotifications, msg.user.user)
+    ], next);
   };
 
-  var add = function (msg) {
+  var add = function (msg, next) {
     async.parallel([
+      async.apply(model.addUser, msg.user),
       async.apply(model.addItem, msg.item, msg.data),
       async.apply(model.addNotification, msg.user, msg.item)
-    ], function (err) {
-      if (err) {};
-    });
+    ], next);
   };
 
-  var remove = function (msg) {
+  var remove = function (msg, next) {
     async.parallel([
-      async.apply(model.clearItem, msg.user, msg.item)
-    ], function (err) {
-      if (err) {};
-    });
+      async.apply(model.clearItem, msg.user.user, msg.item.item)
+    ], next);
   };
 
   return {

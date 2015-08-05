@@ -9,6 +9,7 @@ module.exports = {
     require('./feed-remove-1')
   ],
   'feed-view': [
-    require('./feed-view-1')
+    require('./feed-view-1'),
+    require('./feed-view-2')
   ]
 };

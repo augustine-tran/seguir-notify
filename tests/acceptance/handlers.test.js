@@ -1,38 +1,29 @@
 /*eslint-env node, mocha */
 var expect = require('expect.js');
 var async = require('async');
-var TIMEOUT = 200;
+var moment = require('moment');
 
 describe('Handlers and Model', function () {
 
   var config = require('../../config')();
+  var Redis = require('../../db/redis');
   var fixtures = require('../fixtures');
-  var model = require('../../model')(config);
-  var redis = model._redis;
-  var api;
+  var feed;
+  var redis;
+  var model;
 
   this.timeout(5000);
 
   before(function (done) {
-    require('seguir')(config, function (err, seguirApi) {
-      expect(err).to.be(null);
-      api = seguirApi;
-      require('../../handlers')(api, config);
+    Redis(config, function (next, client) {
+      redis = client;
+      model = require('../../model')(config, redis);
+      feed = require('../../handlers/feed')(config, redis);
       done();
     });
   });
 
   describe('Basic Handlers', function () {
-
-    it('Seguir messaging redis client is working', function (done) {
-
-      api.messaging.client.ping(function (err, result) {
-        expect(err).to.be(null);
-        expect(result).to.be('PONG');
-        done();
-      });
-
-    });
 
     it('Seguir notify redis client is working', function (done) {
 
@@ -48,23 +39,22 @@ describe('Handlers and Model', function () {
 
   describe('Feed - additions and removals', function () {
 
-    beforeEach(function (done) {
-      api.messaging.client.flushdb(done);
+    beforeEach(function () {
+      redis.flushdb();
     });
 
     it('can publish a feed-add event and observe the data directly in redis', function (done) {
 
       var sample = fixtures['feed-add'][0];
-      api.messaging.publish('feed-add', sample);
-
-      setTimeout(function () {
+      feed.add(sample, function (err, results) {
+        expect(err).to.be(null);
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results.length).to.be(1);
           expect(results[0].item).to.be(sample.item.item);
           done();
         });
-      }, TIMEOUT);
+      });
 
     });
 
@@ -72,22 +62,16 @@ describe('Handlers and Model', function () {
 
       var phteven = fixtures['feed-add'][0].user.user;
 
-      async.map(fixtures['feed-add'], function (item, cb) {
-        api.messaging.publish('feed-add', item);
-        setTimeout(cb, 5);
-      }, function (err) {
+      async.map(fixtures['feed-add'], feed.add, function (err) {
         expect(err).to.be(null);
-        setTimeout(function () {
-          model.getNotificationsForUser(phteven, function (err, results) {
-            expect(err).to.be(null);
-            expect(results.length).to.be(3);
-            expect(results[0].item).to.be(fixtures['feed-add'][0].item.item);
-            expect(results[1].item).to.be(fixtures['feed-add'][2].item.item);
-            expect(results[2].item).to.be(fixtures['feed-add'][3].item.item);
-            done();
-          });
-        }, TIMEOUT);
-
+        model.getNotificationsForUser(phteven, function (err, results) {
+          expect(err).to.be(null);
+          expect(results.length).to.be(3);
+          expect(results[0].item).to.be(fixtures['feed-add'][0].item.item);
+          expect(results[1].item).to.be(fixtures['feed-add'][2].item.item);
+          expect(results[2].item).to.be(fixtures['feed-add'][3].item.item);
+          done();
+        });
       });
 
     });
@@ -97,79 +81,182 @@ describe('Handlers and Model', function () {
       var sample = fixtures['feed-add'][1];
       var removeSample = fixtures['feed-remove'][0];
 
-      api.messaging.publish('feed-add', sample);
-
-      setTimeout(function () {
+      feed.add(sample, function (err) {
+        expect(err).to.be(null);
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results.length).to.be(1);
           expect(results[0].item).to.be(sample.item.item);
-
-          api.messaging.publish('feed-remove', removeSample);
-
-          setTimeout(function () {
+          feed.remove(removeSample, function (err) {
+            expect(err).to.be(null);
             model.getNotificationsForUser(sample.user.user, function (err, results) {
               expect(err).to.be(null);
               expect(results.length).to.be(0);
               done();
             });
-          }, TIMEOUT);
-
+          });
         });
-      }, TIMEOUT);
+      });
 
     });
 
   });
 
-  describe('Feed - user state - views clear out any notifications', function () {
+  describe('Basic notifications and feed views', function () {
 
     before(function (done) {
-      api.messaging.client.flushdb(done);
+      redis.flushdb(done);
     });
 
     it('can publish a feed-view event and see no notification data in redis', function (done) {
 
       var sample = fixtures['feed-view'][0];
-      api.messaging.publish('feed-view', sample);
-
-      setTimeout(function () {
+      feed.view(sample, function (err) {
+        expect(err).to.be(null);
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results.length).to.be(0);
           done();
         });
-      }, TIMEOUT);
+      });
 
     });
 
     it('can publish a feed-add event and observe the data directly in redis', function (done) {
 
       var sample = fixtures['feed-add'][0];
-      api.messaging.publish('feed-add', sample);
-
-      setTimeout(function () {
+      feed.add(sample, function (err) {
+        expect(err).to.be(null);
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results[0].item).to.be(sample.item.item);
           done();
         });
-      }, TIMEOUT);
+      });
+
+    });
+
+    it('can see user status for a user with notifications', function (done) {
+
+      var sample = fixtures['feed-add'][0];
+      model.getUserStatus(sample.user.user, function (err, status) {
+        expect(err).to.be(null);
+        expect(status.notifications).to.be(1);
+        done();
+      });
 
     });
 
     it('can publish a second feed-view event and see no notification data in redis', function (done) {
-
-      var sample = fixtures['feed-view'][0];
-      api.messaging.publish('feed-view', sample);
-
-      setTimeout(function () {
+      var sample = fixtures['feed-view'][1];
+      feed.view(sample, function (err) {
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results.length).to.be(0);
           done();
         });
-      }, TIMEOUT);
+      });
+    });
+
+    it('can see user status for a user with previous notifications after a feed view', function (done) {
+      var sample = fixtures['feed-view'][1];
+      model.getUserStatus(sample.user.user, function (err, status) {
+        expect(err).to.be(null);
+        expect(status.notifications).to.be(0);
+        done();
+      });
+    });
+
+    it('can see user status for a user with a number of notifications', function (done) {
+
+      var phteven = fixtures['feed-add'][0].user.user;
+      async.map(fixtures['feed-add'], feed.add, function (err) {
+        expect(err).to.be(null);
+        model.getUserStatus(phteven, function (err, status) {
+          expect(err).to.be(null);
+          expect(status.notifications).to.be(3);
+          done();
+        });
+      });
+
+    });
+
+  });
+
+  describe('Notifications and buckets', function () {
+
+    before(function (done) {
+      redis.flushdb(function () {
+        async.map(fixtures['feed-view'], feed.view, done);
+      });
+    });
+
+    beforeEach(function (done) {
+      async.map(fixtures['feed-add'], feed.add, done);
+    });
+
+    var bucket1 = moment().add(1, 'day').format('YYYYMMDD:HH');
+    var bucket3 = moment().add(3, 'day').format('YYYYMMDD:HH');
+    var bucket5 = moment().add(5, 'day').format('YYYYMMDD:HH');
+
+    it('can see users who should be notified in a given bucket', function (done) {
+      model.getUsersForBucket(bucket1, function (err, users) {
+        expect(err).to.be(null);
+        expect(users.length).to.be(2);
+        done();
+      });
+    });
+
+    it('after notifying users in a given bucket, they move out to the next one', function (done) {
+
+      model.notifyUsersForBucket(bucket1, function (err) {
+        expect(err).to.be(null);
+        model.getUsersForBucket(bucket1, function (err, users) {
+          expect(err).to.be(null);
+          expect(users.length).to.be(0);
+          model.getUsersForBucket(bucket3, function (err, users) {
+            expect(err).to.be(null);
+            expect(users.length).to.be(2);
+            done();
+          });
+        });
+      });
+
+    });
+
+    it('after notifying users again in a given bucket, they move out to the next one', function (done) {
+
+      model.notifyUsersForBucket(bucket3, function (err) {
+        expect(err).to.be(null);
+        model.getUsersForBucket(bucket3, function (err, users) {
+          expect(err).to.be(null);
+          expect(users.length).to.be(0);
+          model.getUsersForBucket(bucket5, function (err, users) {
+            expect(err).to.be(null);
+            expect(users.length).to.be(2);
+            done();
+          });
+        });
+      });
+
+    });
+
+    it('after notifying users again in the final bucket, they then become inert', function (done) {
+
+      var phteven = fixtures['feed-add'][0].user.user;
+      model.notifyUsersForBucket(bucket5, function (err) {
+        expect(err).to.be(null);
+        model.getUsersForBucket(bucket5, function (err, users) {
+          expect(err).to.be(null);
+          expect(users.length).to.be(0);
+          model.getUserStatus(phteven, function (err, status) {
+            expect(err).to.be(null);
+            expect(status.notifications).to.be(0);
+            expect(status.state.bucket_period).to.be('_PAUSED_');
+            done();
+          });
+        });
+      });
 
     });
 
