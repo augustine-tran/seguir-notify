@@ -10,7 +10,7 @@ module.exports = function (api, config) {
       async.apply(model.clearNotifications, msg.user)
     ], function (err, result) {
       console.log(JSON.stringify(err, null, 2));
-      console.dir(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result, null, 2));
     });
   };
 
@@ -20,7 +20,7 @@ module.exports = function (api, config) {
       async.apply(model.addNotification, msg.user, msg.item)
     ], function (err, result) {
       console.log(JSON.stringify(err, null, 2));
-      console.dir(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result, null, 2));
     });
   };
 
