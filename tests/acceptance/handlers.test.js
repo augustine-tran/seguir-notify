@@ -1,6 +1,7 @@
 /*eslint-env node, mocha */
 var expect = require('expect.js');
 var async = require('async');
+var TIMEOUT = 200;
 
 describe('Handlers and Model', function () {
 
@@ -63,7 +64,7 @@ describe('Handlers and Model', function () {
           expect(results[0].item).to.be(sample.item.item);
           done();
         });
-      }, 50);
+      }, TIMEOUT);
 
     });
 
@@ -85,7 +86,7 @@ describe('Handlers and Model', function () {
             expect(results[2].item).to.be(fixtures['feed-add'][3].item.item);
             done();
           });
-        }, 50);
+        }, TIMEOUT);
 
       });
 
@@ -112,10 +113,10 @@ describe('Handlers and Model', function () {
               expect(results.length).to.be(0);
               done();
             });
-          }, 50);
+          }, TIMEOUT);
 
         });
-      }, 50);
+      }, TIMEOUT);
 
     });
 
@@ -138,7 +139,7 @@ describe('Handlers and Model', function () {
           expect(results.length).to.be(0);
           done();
         });
-      }, 50);
+      }, TIMEOUT);
 
     });
 
@@ -153,7 +154,7 @@ describe('Handlers and Model', function () {
           expect(results[0].item).to.be(sample.item.item);
           done();
         });
-      }, 50);
+      }, TIMEOUT);
 
     });
 
@@ -168,7 +169,7 @@ describe('Handlers and Model', function () {
           expect(results.length).to.be(0);
           done();
         });
-      }, 50);
+      }, TIMEOUT);
 
     });
 
