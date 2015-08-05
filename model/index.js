@@ -77,7 +77,7 @@ module.exports = function (config) {
     var notifyKey = ['notify', user.user].join(':');
     async.parallel([
       async.apply(redis.del.bind(redis), notifyKey),
-      async.apply(redis.lrem.bind(redis), usersKey, user.user)
+      async.apply(redis.lrem.bind(redis), usersKey, 0, user.user)
     ], next);
   };
 

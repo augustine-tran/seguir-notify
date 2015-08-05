@@ -9,18 +9,18 @@ module.exports = function (api, config) {
       async.apply(model.addUser, msg.user),
       async.apply(model.clearNotifications, msg.user)
     ], function (err, result) {
-      console.dir(err);
-      console.dir(result);
+      console.log(JSON.stringify(err, null, 2));
+      console.dir(JSON.stringify(result, null, 2));
     });
   };
 
   var add = function (msg) {
-    console.dir(msg);
     async.parallel([
       async.apply(model.addItem, msg.item, msg.data),
       async.apply(model.addNotification, msg.user, msg.item)
-    ], function () {
-      //
+    ], function (err, result) {
+      console.log(JSON.stringify(err, null, 2));
+      console.dir(JSON.stringify(result, null, 2));
     });
   };
 
