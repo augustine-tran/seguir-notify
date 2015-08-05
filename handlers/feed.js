@@ -8,9 +8,8 @@ module.exports = function (api, config) {
     async.parallel([
       async.apply(model.addUser, msg.user),
       async.apply(model.clearNotifications, msg.user)
-    ], function (err, result) {
-      console.log(JSON.stringify(err, null, 2));
-      console.log(JSON.stringify(result, null, 2));
+    ], function (err) {
+      if (err) {};
     });
   };
 
@@ -18,17 +17,16 @@ module.exports = function (api, config) {
     async.parallel([
       async.apply(model.addItem, msg.item, msg.data),
       async.apply(model.addNotification, msg.user, msg.item)
-    ], function (err, result) {
-      console.log(JSON.stringify(err, null, 2));
-      console.log(JSON.stringify(result, null, 2));
+    ], function (err) {
+      if (err) {};
     });
   };
 
   var remove = function (msg) {
     async.parallel([
       async.apply(model.clearItem, msg.user, msg.item)
-    ], function () {
-      //
+    ], function (err) {
+      if (err) {};
     });
   };
 
