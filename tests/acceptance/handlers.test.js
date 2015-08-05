@@ -59,6 +59,7 @@ describe('Handlers and Model', function () {
       setTimeout(function () {
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
+          expect(results.length).to.be(1);
           expect(results[0].item).to.be(sample.item.item);
           done();
         });
@@ -78,6 +79,7 @@ describe('Handlers and Model', function () {
         setTimeout(function () {
           model.getNotificationsForUser(phteven, function (err, results) {
             expect(err).to.be(null);
+            expect(results.length).to.be(3);
             expect(results[0].item).to.be(fixtures['feed-add'][0].item.item);
             expect(results[1].item).to.be(fixtures['feed-add'][2].item.item);
             expect(results[2].item).to.be(fixtures['feed-add'][3].item.item);
@@ -99,6 +101,7 @@ describe('Handlers and Model', function () {
       setTimeout(function () {
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
+          expect(results.length).to.be(1);
           expect(results[0].item).to.be(sample.item.item);
 
           api.messaging.publish('feed-remove', removeSample);
