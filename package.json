@@ -1,6 +1,6 @@
 {
   "name": "seguir-notify",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Notification server for self-hosted social network backend and API",
   "main": "api/index.js",
   "scripts": {
