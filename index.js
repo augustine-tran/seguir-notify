@@ -35,22 +35,15 @@ function bootstrapServer (api, config, notifier, next) {
   });
 
   server.get('/status', function (req, res, cb) {
-    api.auth.getAccounts(function (err, accounts) {
-      if (err) { return _error(err); }
-      var statusConfig = _.clone(config);
-      delete statusConfig.logger;
-      res.send({status: 'OK', config: statusConfig, accounts: accounts});
-      cb();
-    });
+    var statusConfig = _.clone(config);
+    delete statusConfig.logger;
+    res.send({status: 'OK', config: statusConfig});
+    cb();
   });
 
   // Preflight
   server.pre(restify.pre.sanitizePath());
   server.pre(restify.pre.userAgentConnection());
-
-  function _error (err) {
-    return new restify.HttpError(err);
-  }
 
   var redis = require('./db/redis');
   redis(config, function (err, client) {
