@@ -13,11 +13,14 @@ module.exports = function (config, redis) {
   };
 
   var add = function (msg, next) {
-    async.parallel([
-      async.apply(model.addUser, msg.user),
-      async.apply(model.addItem, msg.item, msg.data),
-      async.apply(model.addNotification, msg.user, msg.item)
-    ], next);
+    model.getUserState(msg.user.user, function (err, active) {
+      if (err) { return next(err); }
+      if (!active) { return next(null); }
+      async.parallel([
+        async.apply(model.addItem, msg.item, msg.data),
+        async.apply(model.addNotification, msg.user, msg.item)
+      ], next);
+    });
   };
 
   var remove = function (msg, next) {

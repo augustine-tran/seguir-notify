@@ -2,6 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var moment = require('moment');
 var PAUSED = '_PAUSED_';
+var DEFAULT_LIMIT = 20;
 var keys = require('./keys');
 
 module.exports = function (config, redis, notifier) {
@@ -17,12 +18,14 @@ module.exports = function (config, redis, notifier) {
     var userNameKey = user.username ? keys.username(user.username) : null;
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
     user.userdata = JSON.stringify(user.userdata);
-    redis.multi()
-        .hmset(userKey, user)
-        .set(userNameKey, user.user)
-        .set(userAltidKey, user.user)
-        .sadd(keys.users, user.user)
-        .exec(next);
+
+    var multiCmd = redis.multi()
+        .hmset(userKey, user);
+
+    if (userNameKey) multiCmd.set(userNameKey, user.user);
+    if (userAltidKey) multiCmd.set(userAltidKey, user.user);
+
+    multiCmd.exec(next);
 
   };
 
@@ -150,9 +153,9 @@ module.exports = function (config, redis, notifier) {
    */
   var getUsers = function (next) {
     var userKey = keys.users;
-    redis.sort(userKey, 'by', 'nosort', 'get', 'user:*->user', 'get', 'user:*->username', 'get', 'user:*->altid', function (err, results) {
+    redis.smembers(userKey, function (err, results) {
       if (err) { return next(err); }
-      next(null, sortByToObject(['user', 'username', 'altid'], results));
+      async.map(results, getUserStatus, next);
     });
   };
 
@@ -164,6 +167,18 @@ module.exports = function (config, redis, notifier) {
     redis.get(usernameKey, function (err, user) {
       if (err) { return next(err); }
       getUser(user, next);
+    });
+  };
+
+  /**
+   * Get user state - we won't write notifications unless
+   * the user has a bucket that isn't paused.
+   */
+  var getUserState = function (user, next) {
+    var userViewStateKey = keys.viewState(user);
+    redis.hget(userViewStateKey, keys.BUCKET_KEY, function (err, bucket) {
+      if (err) { return next(err); }
+      next(null, bucket && bucket !== PAUSED);
     });
   };
 
@@ -180,6 +195,7 @@ module.exports = function (config, redis, notifier) {
       .llen(notifyKey)
       .exec(function (err, result) {
         if (err) { return next(err); }
+        result[0].userdata = JSON.parse(result[0].userdata || '{}');
         result[0].state = result[1];
         result[0].notifications = result[2];
         next(null, result[0]);
@@ -196,11 +212,15 @@ module.exports = function (config, redis, notifier) {
   };
 
   /**
-   * Add an item to the notification list for a specific user
+   * Add an item to the notification list for a specific user, keep the list limited
    */
   var addNotification = function (user, item, next) {
     var notifyKey = keys.notify(user.user);
-    redis.rpush(notifyKey, item.item, next);
+    redis.multi()
+      .lpush(notifyKey, item.item)
+      .ltrim(notifyKey, 0, config.notify.limit || DEFAULT_LIMIT)
+      .sadd(keys.users, user.user)
+      .exec(next);
   };
 
   /**
@@ -281,7 +301,7 @@ module.exports = function (config, redis, notifier) {
     var notifyKey = keys.notify(user);
     redis.multi()
       .del(notifyKey)
-      .srem(keys.users, user)
+      .srem('users', user)
       .exec(next);
   };
 
@@ -302,6 +322,7 @@ module.exports = function (config, redis, notifier) {
     addUser: addUser,
     getUser: getUser,
     getUsers: getUsers,
+    getUserState: getUserState,
     getUserByUsername: getUserByUsername,
     addItem: addItem,
     resetViewState: resetViewState,
