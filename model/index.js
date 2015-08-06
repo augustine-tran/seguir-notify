@@ -2,6 +2,8 @@ var _ = require('lodash');
 var async = require('async');
 var moment = require('moment');
 var NOTIFICATION_PERIODS = [1, 3, 5];
+var PAUSED = '_PAUSED_';
+var keys = require('./keys');
 
 module.exports = function (config, redis, notifier) {
 
@@ -12,9 +14,9 @@ module.exports = function (config, redis, notifier) {
    */
   var addUser = function (user, next) {
 
-    var userKey = ['user', user.user].join(':');
-    var userNameKey = user.username ? ['username', user.username].join(':') : null;
-    var userAltidKey = user.altid ? ['useraltid', user.altid].join(':') : null;
+    var userKey = keys.user(user.user);
+    var userNameKey = user.username ? keys.username(user.username) : null;
+    var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
     user.userdata = JSON.stringify(user.userdata);
     redis.multi()
         .hmset(userKey, user)
@@ -30,7 +32,7 @@ module.exports = function (config, redis, notifier) {
    */
   var moveUserNotificationBucket = function (user, state, next) {
 
-    var isPaused = state.bucket_period === '_PAUSED_';
+    var isPaused = state.bucket_period === PAUSED;
     var nextBucket = isPaused ? null : getBucketKey(state.bucket_period, state.last_view);
     if (state.bucket_key && nextBucket === state.bucket_key) { return next(); }
 
@@ -45,11 +47,11 @@ module.exports = function (config, redis, notifier) {
     };
 
     var updateUserState = function (cb) {
-      var userViewStateKey = ['user', 'state', user].join(':');
+      var userViewStateKey = keys.viewState(user);
       if (isPaused) {
-        redis.hdel(userViewStateKey, 'bucket_key', cb);
+        redis.hdel(userViewStateKey, keys.BUCKET_KEY, cb);
       } else {
-        redis.hmset(userViewStateKey, 'bucket_key', nextBucket, cb);
+        redis.hmset(userViewStateKey, keys.BUCKET_KEY, nextBucket, cb);
       }
     };
 
@@ -65,7 +67,7 @@ module.exports = function (config, redis, notifier) {
     if (!bucket) { return; }
     if (typeof date === 'string') date = moment(date);
     var newDate = date.add(bucket, 'days').format('YYYYMMDD:HH');
-    return ['notify', 'bucket', newDate].join(':');
+    return keys.notifyBucket(newDate);
   };
 
   /**
@@ -73,7 +75,7 @@ module.exports = function (config, redis, notifier) {
    */
   var updateViewState = function (user, next) {
 
-    var userViewStateKey = ['user', 'state', user.user].join(':');
+    var userViewStateKey = keys.viewState(user.user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
 
@@ -109,7 +111,7 @@ module.exports = function (config, redis, notifier) {
    */
   var updateViewStateAfterNotifying = function (user, next) {
 
-    var userViewStateKey = ['user', 'state', user].join(':');
+    var userViewStateKey = keys.viewState(user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
 
@@ -119,10 +121,10 @@ module.exports = function (config, redis, notifier) {
       state.bucket_period = NOTIFICATION_PERIODS[state.bucket_period_index];
 
       if (!state.bucket_period) {
-        state.bucket_period = '_PAUSED_';
+        state.bucket_period = PAUSED;
       }
 
-      redis.hmset(userViewStateKey, 'bucket_period', state.bucket_period, 'bucket_period_index', state.bucket_period_index, function (err) {
+      redis.hmset(userViewStateKey, keys.BUCKET_PERIOD, state.bucket_period, keys.BUCKET_PERIOD_INDEX, state.bucket_period_index, function (err) {
         if (err) { return next(err); }
         moveUserNotificationBucket(user, state, next);
       });
@@ -132,12 +134,12 @@ module.exports = function (config, redis, notifier) {
   };
 
   var getUser = function (user, next) {
-    var userKey = ['user', user].join(':');
+    var userKey = keys.user(user);
     redis.hgetall(userKey, next);
   };
 
   var getUserByUsername = function (username, next) {
-    var usernameKey = ['username', username].join(':');
+    var usernameKey = keys.username(username);
     redis.get(usernameKey, function (err, user) {
       if (err) { return next(err); }
       getUser(user, next);
@@ -145,13 +147,13 @@ module.exports = function (config, redis, notifier) {
   };
 
   var addItem = function (item, data, next) {
-    var itemKey = ['item', item.item].join(':');
+    var itemKey = keys.item(item.item);
     item.data = JSON.stringify(data);
     redis.hmset(itemKey, item, next);
   };
 
   var addNotification = function (user, item, next) {
-    var notifyKey = ['notify', user.user].join(':');
+    var notifyKey = keys.notify(user.user);
     redis.rpush(notifyKey, item.item, next);
   };
 
@@ -169,9 +171,9 @@ module.exports = function (config, redis, notifier) {
 
   var getUserStatus = function (user, next) {
 
-    var userKey = ['user', user].join(':');
-    var notifyKey = ['notify', user].join(':');
-    var userViewStateKey = ['user', 'state', user].join(':');
+    var userKey = keys.user(user);
+    var notifyKey = keys.notify(user);
+    var userViewStateKey = keys.viewState(user);
 
     redis.multi()
       .hgetall(userKey)
@@ -187,7 +189,7 @@ module.exports = function (config, redis, notifier) {
   };
 
   var getNotificationsForUser = function (user, next) {
-    var notifyKey = ['notify', user].join(':');
+    var notifyKey = keys.notify(user);
     redis.sort(notifyKey, 'by', 'nosort', 'get', 'item:*->item', 'get', 'item:*->type', 'get', 'item:*->data', function (err, results) {
       if (err) { return next(err); }
       next(null, notificationToObject(results));
@@ -195,7 +197,7 @@ module.exports = function (config, redis, notifier) {
   };
 
   var getUsersForBucket = function (bucket, next) {
-    var bucketKey = ['notify', 'bucket', bucket].join(':');
+    var bucketKey = keys.notifyBucket(bucket);
     redis.smembers(bucketKey, function (err, results) {
       next(err, results);
     });
@@ -225,7 +227,7 @@ module.exports = function (config, redis, notifier) {
   };
 
   var clearNotifications = function (user, next) {
-    var notifyKey = ['notify', user].join(':');
+    var notifyKey = keys.notify(user);
     redis.multi()
       .del(notifyKey)
       .srem(usersKey, user)
@@ -233,8 +235,8 @@ module.exports = function (config, redis, notifier) {
   };
 
   var clearItem = function (user, item, next) {
-    var itemKey = ['item', item].join(':');
-    var notifyKey = ['notify', user].join(':');
+    var itemKey = keys.item(item);
+    var notifyKey = keys.notify(user);
     redis.multi()
       .del(itemKey)
       .lrem(notifyKey, 0, item)
