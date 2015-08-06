@@ -26,7 +26,6 @@ module.exports = function (server, api, config, redis, notifier) {
       if (err) { return _error(err); }
       model.getUserStatus(user.user, function (err, status) {
         if (err) { return _error(err); }
-        status.userdata = JSON.parse(status.userdata);
         res.send(status);
       });
 
