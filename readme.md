@@ -1,6 +1,6 @@
 # Seguir Notify - Notification component for Seguir
 
-[![Build Status](https://travis-ci.org/cliftonc/seguir-notify.svg)](https://travis-ci.org/cliftonc/seguir-notify)
+[![Build Status](https://travis-ci.org/cliftonc/seguir-notify.svg)](https://travis-ci.org/cliftonc/seguir-notify) [![bitHound Score](https://www.bithound.io/github/cliftonc/seguir-notify/badges/score.svg)](https://www.bithound.io/github/cliftonc/seguir-notify)
 
 [http://cliftonc.github.io/seguir/server](http://cliftonc.github.io/seguir)
 
