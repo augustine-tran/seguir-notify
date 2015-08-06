@@ -1,4 +1,5 @@
 module.exports = {
+  'users': 'users',
   'user': function (user) {
     return ['user', user].join(':');
   },

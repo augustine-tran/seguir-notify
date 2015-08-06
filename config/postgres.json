@@ -13,9 +13,10 @@
     "feed": true,
     "db": 0
   },
-  "redis": {
+  "notify": {
     "host": "127.0.0.1",
     "port": 6379,
-    "db": 1
+    "db": 1,
+    "periods": [1, 3, 5]
   }
 }

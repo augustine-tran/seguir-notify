@@ -1,13 +1,12 @@
 var _ = require('lodash');
 var async = require('async');
 var moment = require('moment');
-var NOTIFICATION_PERIODS = [1, 3, 5];
 var PAUSED = '_PAUSED_';
 var keys = require('./keys');
 
 module.exports = function (config, redis, notifier) {
 
-  var usersKey = 'users';
+  var NOTIFICATION_PERIODS = config.notify.periods || [1, 3, 5];
 
   /**
    * Adding a user ensures that the user exists in the notification db.
@@ -22,12 +21,23 @@ module.exports = function (config, redis, notifier) {
         .hmset(userKey, user)
         .set(userNameKey, user.user)
         .set(userAltidKey, user.user)
-        .sadd(usersKey, user.user)
+        .sadd(keys.users, user.user)
         .exec(next);
 
   };
 
-   /**
+  /**
+   * Use the current bucket period for user and date to create
+   * a bucket key
+   */
+  var getBucketKey = function (bucket, date) {
+    if (!bucket) { return; }
+    if (typeof date === 'string') date = moment(date);
+    var newDate = date.add(bucket, 'days').format('YYYYMMDD:HH');
+    return keys.notifyBucket(newDate);
+  };
+
+  /**
    * Whenever a user views their feed move them into the right notification bucket
    */
   var moveUserNotificationBucket = function (user, state, next) {
@@ -63,17 +73,10 @@ module.exports = function (config, redis, notifier) {
 
   };
 
-  var getBucketKey = function (bucket, date) {
-    if (!bucket) { return; }
-    if (typeof date === 'string') date = moment(date);
-    var newDate = date.add(bucket, 'days').format('YYYYMMDD:HH');
-    return keys.notifyBucket(newDate);
-  };
-
   /**
-   * Update the state of the user after a new view
+   * Reset the view state after a view
    */
-  var updateViewState = function (user, next) {
+  var resetViewState = function (user, next) {
 
     var userViewStateKey = keys.viewState(user.user);
 
@@ -107,7 +110,8 @@ module.exports = function (config, redis, notifier) {
   };
 
   /**
-   * After notifying a user update their view state
+   * After notifying a user push them out into the next notification bucket
+   * This is reset if they view their feed.
    */
   var updateViewStateAfterNotifying = function (user, next) {
 
@@ -133,11 +137,28 @@ module.exports = function (config, redis, notifier) {
 
   };
 
+  /**
+   * Get user details
+   */
   var getUser = function (user, next) {
     var userKey = keys.user(user);
     redis.hgetall(userKey, next);
   };
 
+  /**
+   * Get users
+   */
+  var getUsers = function (next) {
+    var userKey = keys.users;
+    redis.sort(userKey, 'by', 'nosort', 'get', 'user:*->user', 'get', 'user:*->username', 'get', 'user:*->altid', function (err, results) {
+      if (err) { return next(err); }
+      next(null, sortByToObject(['user', 'username', 'altid'], results));
+    });
+  };
+
+  /**
+   * Get user by username
+   */
   var getUserByUsername = function (username, next) {
     var usernameKey = keys.username(username);
     redis.get(usernameKey, function (err, user) {
@@ -146,35 +167,13 @@ module.exports = function (config, redis, notifier) {
     });
   };
 
-  var addItem = function (item, data, next) {
-    var itemKey = keys.item(item.item);
-    item.data = JSON.stringify(data);
-    redis.hmset(itemKey, item, next);
-  };
-
-  var addNotification = function (user, item, next) {
-    var notifyKey = keys.notify(user.user);
-    redis.rpush(notifyKey, item.item, next);
-  };
-
-  var notificationToObject = function (notifications) {
-    var fieldList = ['item', 'type', 'data'], fields, newObject, results = [];
-    while (notifications.length > 0) {
-      fields = _.take(notifications, fieldList.length);
-      notifications = _.drop(notifications, fieldList.length);
-      newObject = _.zipObject(fieldList, fields);
-      newObject.data = JSON.parse(newObject.data);
-      if (newObject.item) { results.push(newObject); }
-    };
-    return results;
-  };
-
+  /**
+   * Get a summary of current user state and data
+   */
   var getUserStatus = function (user, next) {
-
     var userKey = keys.user(user);
     var notifyKey = keys.notify(user);
     var userViewStateKey = keys.viewState(user);
-
     redis.multi()
       .hgetall(userKey)
       .hgetall(userViewStateKey)
@@ -185,17 +184,54 @@ module.exports = function (config, redis, notifier) {
         result[0].notifications = result[2];
         next(null, result[0]);
       });
-
   };
 
+  /**
+   * Persist an item that will form part of a notification
+   */
+  var addItem = function (item, data, next) {
+    var itemKey = keys.item(item.item);
+    item.data = JSON.stringify(data);
+    redis.hmset(itemKey, item, next);
+  };
+
+  /**
+   * Add an item to the notification list for a specific user
+   */
+  var addNotification = function (user, item, next) {
+    var notifyKey = keys.notify(user.user);
+    redis.rpush(notifyKey, item.item, next);
+  };
+
+  /**
+   * Convert the result from the SORT BY back into an array of items
+   */
+  var sortByToObject = function (fieldList, notifications) {
+    var fields, newObject, results = [];
+    while (notifications.length > 0) {
+      fields = _.take(notifications, fieldList.length);
+      notifications = _.drop(notifications, fieldList.length);
+      newObject = _.zipObject(fieldList, fields);
+      if (newObject.data) newObject.data = JSON.parse(newObject.data);
+      if (newObject[fieldList[0]]) { results.push(newObject); }
+    };
+    return results;
+  };
+
+  /**
+   * Get a list of all notifications active for the current user
+   */
   var getNotificationsForUser = function (user, next) {
     var notifyKey = keys.notify(user);
     redis.sort(notifyKey, 'by', 'nosort', 'get', 'item:*->item', 'get', 'item:*->type', 'get', 'item:*->data', function (err, results) {
       if (err) { return next(err); }
-      next(null, notificationToObject(results));
+      next(null, sortByToObject(['item', 'type', 'data'], results));
     });
   };
 
+  /**
+   * Get a list of users active within a specific notification bucket
+   */
   var getUsersForBucket = function (bucket, next) {
     var bucketKey = keys.notifyBucket(bucket);
     redis.smembers(bucketKey, function (err, results) {
@@ -203,15 +239,26 @@ module.exports = function (config, redis, notifier) {
     });
   };
 
+  /**
+   * Trigger the notifier callback for a specific user, with all of their pending
+   * notifications.
+   */
   var notifyUser = function (user, next) {
-    getNotificationsForUser(user, function (err, notifications) {
+    getUser(user, function (err, userObject) {
       if (err) { return next(err); }
-      clearNotifications(user, function (err) {
-        next(err, notifications.length);
-      });;
+      getNotificationsForUser(user, function (err, notifications) {
+        if (err) { return next(err); }
+        notifier && notifier(userObject, notifications);
+        clearNotifications(user, function (err) {
+          next(err, notifications.length);
+        });
+      });
     });
   };
 
+  /**
+   * Notify all users currently active within a specific bucket.
+   */
   var notifyUsersForBucket = function (bucket, next) {
     getUsersForBucket(bucket, function (err, users) {
       if (err) { return next(err); }
@@ -226,14 +273,21 @@ module.exports = function (config, redis, notifier) {
     });
   };
 
+  /**
+   * Clear all pending notifications for a specific user and remove from
+   * pending users list.
+   */
   var clearNotifications = function (user, next) {
     var notifyKey = keys.notify(user);
     redis.multi()
       .del(notifyKey)
-      .srem(usersKey, user)
+      .srem(keys.users, user)
       .exec(next);
   };
 
+  /**
+   * Clear a specific item from a users notification list
+   */
   var clearItem = function (user, item, next) {
     var itemKey = keys.item(item);
     var notifyKey = keys.notify(user);
@@ -247,9 +301,10 @@ module.exports = function (config, redis, notifier) {
     _redis: redis,
     addUser: addUser,
     getUser: getUser,
+    getUsers: getUsers,
     getUserByUsername: getUserByUsername,
     addItem: addItem,
-    updateViewState: updateViewState,
+    resetViewState: resetViewState,
     addNotification: addNotification,
     clearItem: clearItem,
     clearNotifications: clearNotifications,

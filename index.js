@@ -66,7 +66,9 @@ function bootstrapServer (api, config, notifier, next) {
 if (require.main === module) {
 
   var config = require('./config')();
-  var notifier = function () {};
+  var notifier = function (user, notifications) {
+    console.log('Notify [' + user.username + ']: ' + notifications && notifications.length);
+  };
   require('seguir')(config, function (err, api) {
     if (err) { return process.exit(0); }
     bootstrapServer(api, config, notifier, function (err, server) {

@@ -14,10 +14,14 @@ describe('Handlers and Model', function () {
 
   this.timeout(5000);
 
+  var notifier = function (user, notifications) {
+    console.log('Notify [' + user.username + ']: ' + (notifications && notifications.length));
+  };
+
   before(function (done) {
     Redis(config, function (next, client) {
       redis = client;
-      model = require('../../model')(config, redis);
+      model = require('../../model')(config, redis, notifier);
       feed = require('../../handlers/feed')(config, redis);
       done();
     });
@@ -256,6 +260,16 @@ describe('Handlers and Model', function () {
             done();
           });
         });
+      });
+
+    });
+
+    it('can retrieve a list of active users', function (done) {
+
+      model.getUsers(function (err, users) {
+        expect(err).to.be(null);
+        expect(users.length).to.be(2);
+        done();
       });
 
     });

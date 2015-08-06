@@ -7,7 +7,7 @@ module.exports = function (config, redis) {
   var view = function (msg, next) {
     async.parallel([
       async.apply(model.addUser, msg.user),
-      async.apply(model.updateViewState, msg.user),
+      async.apply(model.resetViewState, msg.user),
       async.apply(model.clearNotifications, msg.user.user)
     ], next);
   };
