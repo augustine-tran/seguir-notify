@@ -14,7 +14,24 @@ module.exports = function (server, api, config, redis, notifier) {
     cb();
   });
 
-  server.get('/user/:username', function (req, res, cb) {
+  server.get('/user/:user', function (req, res, cb) {
+    model.getUserStatus(req.params.user, function (err, status) {
+      if (err) { return _error(err); }
+      res.send(status);
+    });
+  });
+
+  server.get('/useraltid/:altid', function (req, res, cb) {
+    model.getUserByAltid(req.params.altid, function (err, user) {
+      if (err) { return _error(err); }
+      model.getUserStatus(user.user, function (err, status) {
+        if (err) { return _error(err); }
+        res.send(status);
+      });
+    });
+  });
+
+  server.get('/username/:username', function (req, res, cb) {
     model.getUserByUsername(req.params.username, function (err, user) {
       if (err) { return _error(err); }
       model.getUserStatus(user.user, function (err, status) {

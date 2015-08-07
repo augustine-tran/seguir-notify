@@ -82,11 +82,78 @@ When in the PAUSED state, your notifications will not build up until you visit t
 
 # End Points
 
+### /user/:user
+
+View current details and state for a user by seguir ID.
+
+[http://localhost:4001/user/62bfd6c1-3f7a-43a4-afc3-ed12adf17d11](http://localhost:4001/user/62bfd6c1-3f7a-43a4-afc3-ed12adf17d11)
+
+### /username/:username
+
+View current details and state for a user by username.
+
+[http://localhost:4001/username/cliftonc](http://localhost:4001/username/cliftonc)
+
+### /useraltid/:useraltid
+
+View current details and state for a user by altid.
+
+[http://localhost:4001/useraltid/123](http://localhost:4001/user/123)
+
+### /notify
+
+Trigger a notification for the current hour.
+
+[http://localhost:4001/notify](http://localhost:4001/notify)
+
+### /notify/20150815:13
+
+Trigger a notification for a spefific bucket.
+
+[http://localhost:4001/notify/20150815:13](http://localhost:4001/notify/20150815:13)
+
+## Connecting Up The Notifier
+
+In your service, all you need to do is pass in a callback when configuring seguir-notify:
+
+```js
+let notifier = (user, notifications) => {
+  // THIS IS WHERE YOU WOULD ACTUALLY DO SOMETHING USEFUL
+  logger.info(user.user + ': ' + notifications.length);
+};
+seguirNotify(config, notifier, (err, server) => {
+  if (err) { return next(err); }
+  server.listen(config.server.port, () => {
+    logger.info('Server %s listening at %s', server.name, server.url);
+    next();
+  });
+});
 ```
-/users
-/user/cliftonc
-/notify
-/notify/20150815:13
+
+## Adding additional routes
+
+You may want to wire up additional routes - e.g. one that reads your own user cookie / auth and interacts with the data.
+
+```js
+seguirNotify(config, notifier, (err, server) => {
+  if (err) { return next(err); }
+
+  // Custom routes - assume 'authMiddleware' is auth middleware that populates req.user
+  server.get('/status', authMiddleware, function (req, res, cb) {
+    model.getUserByAltid(req.user.id, function (err, user) {
+      server.model.getUserStatus(user.user, function (err, status) {
+        res.send(status);
+        cb();
+      });
+    });
+  });
+
+  server.listen(config.server.port, () => {
+    logger.info('Server %s listening at %s', server.name, server.url);
+    next();
+  });
+
+});
 ```
 
 # Redis Model
