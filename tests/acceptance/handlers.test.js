@@ -192,6 +192,7 @@ describe('Handlers and Model', function () {
     it('can publish a second feed-view event and see no notification data in redis', function (done) {
       var sample = fixtures['feed-view'][1];
       feed.view(sample, function (err) {
+        expect(err).to.be(null);
         model.getNotificationsForUser(sample.user.user, function (err, results) {
           expect(err).to.be(null);
           expect(results.length).to.be(0);
