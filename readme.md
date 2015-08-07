@@ -209,3 +209,19 @@ item:9930e95-c77f-4721-bfb8-91cf2081d88f
 ```
 
 This is a copy of the item from seguir.
+
+# Developing
+
+Simply git clone this repository, ensure you have redis running locally.
+
+To avoid having to load all of seguir, you can load some sample data via the script:
+
+```
+node scripts/sample
+```
+
+The server runs by default on http://localhost:4001/
+
+```
+node .
+```
