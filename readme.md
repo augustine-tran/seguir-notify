@@ -40,7 +40,7 @@ You then leave the site (boo), and go and do something else on the internets.  W
 
 ```
 
-This triggers a callback to your service:
+This triggers a callback to your service (per user), so that you can choose to notify them however you like - e.g. drop a message out to a worker queue to send an email.
 
 ```js
 notifier (user, notifications) => { }
