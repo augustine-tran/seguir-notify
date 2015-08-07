@@ -14,13 +14,6 @@ module.exports = function (server, api, config, redis, notifier) {
     cb();
   });
 
-  server.get('/users', function (req, res, cb) {
-    model.getUsers(function (err, users) {
-      if (err) { return _error(err); }
-      res.send(users);
-    });
-  });
-
   server.get('/user/:username', function (req, res, cb) {
     model.getUserByUsername(req.params.username, function (err, user) {
       if (err) { return _error(err); }
