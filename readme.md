@@ -46,7 +46,7 @@ This triggers a callback to your service:
 notifier (user, notifications) => { }
 ```
 
-In addition, it moves everyone in the bucket out to the next one:
+This clears out all pending notifications in your queue, and in addition it moves everyone in the bucket out to the next one - e.g. it will notify them again in 2 days instead of 1.
 
 ```
     move * -----> *
@@ -55,7 +55,7 @@ In addition, it moves everyone in the bucket out to the next one:
        +---+    +---+    +---+    +---+
 ```
 
-Now, here is where you hope that you receive your notification, and click on it to come back and visit the site.  If you do this, then you are moved back into bucket one (a new bucket 24 hours from now).
+Now, here is where you hope that you receive your notification, and click on it to come back and visit the site.  If you do this, then you are moved back into a new 'bucket one' (which is a bucket 1 day from when you view your feed).
 
 
 ```
@@ -65,7 +65,7 @@ VIEW ->  *
        +---+    +---+    +---+    +---+
 ```
 
-However, if you don't click on your link, then in 48 hours the notify process will fire again for that bucket:
+However, if you don't click on your link, then in 2 days the notify process will fire again for that bucket:
 
 ```
        +   +    +   +    +   +    +   +
@@ -80,6 +80,14 @@ And the process repeats, all the way until you are moved out to the far right - 
 
 When in the PAUSED state, your notifications will not build up until you visit the home page again (this is to avoid spamming users and filling up the notification queue infinitely for inactive users).
 
+# End Points
+
+```
+/users
+/user/cliftonc
+/notify
+/notify/20150815:13
+```
 
 # Redis Model
 
