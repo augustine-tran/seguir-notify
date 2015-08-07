@@ -16,16 +16,18 @@ module.exports = function (server, api, config, redis, notifier) {
 
   server.get('/user/:user', function (req, res, cb) {
     model.getUserStatus(req.params.user, function (err, status) {
-      if (err) { return _error(err); }
+      if (err) { return cb(_error(err)); }
+      if (!status) { return cb(_error({statusCode: 404, message: 'User not found'})); }
       res.send(status);
     });
   });
 
   server.get('/useraltid/:altid', function (req, res, cb) {
     model.getUserByAltid(req.params.altid, function (err, user) {
-      if (err) { return _error(err); }
+      if (err) { return cb(_error(err)); }
+      if (!user) { return cb(_error({statusCode: 404, message: 'User not found'})); }
       model.getUserStatus(user.user, function (err, status) {
-        if (err) { return _error(err); }
+        if (err) { return cb(_error(err)); }
         res.send(status);
       });
     });
@@ -33,9 +35,10 @@ module.exports = function (server, api, config, redis, notifier) {
 
   server.get('/username/:username', function (req, res, cb) {
     model.getUserByUsername(req.params.username, function (err, user) {
-      if (err) { return _error(err); }
+      if (err) { return cb(_error(err)); }
+      if (!user) { return cb(_error({statusCode: 404, message: 'User not found'})); }
       model.getUserStatus(user.user, function (err, status) {
-        if (err) { return _error(err); }
+        if (err) { return cb(_error(err)); }
         res.send(status);
       });
 
@@ -45,7 +48,7 @@ module.exports = function (server, api, config, redis, notifier) {
   server.get('/notify', function (req, res, cb) {
     var bucket = moment().format('YYYYMMDD:HH');
     model.notifyUsersForBucket(bucket, function (err, status) {
-      if (err) { return _error(err); }
+      if (err) { return cb(_error(err)); }
       res.send(status);
     });
   });
@@ -53,7 +56,7 @@ module.exports = function (server, api, config, redis, notifier) {
   server.get('/notify/:bucket?', function (req, res, cb) {
     var bucket = req.params.bucket;
     model.notifyUsersForBucket(bucket, function (err, status) {
-      if (err) { return _error(err); }
+      if (err) { return cb(_error(err)); }
       res.send(status);
     });
   });
