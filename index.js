@@ -48,7 +48,7 @@ function bootstrapServer (api, config, notifier, next) {
   var redis = require('./db/redis');
   redis(config, function (err, client) {
     if (err) { return next(err); }
-    server.model = require('./model')(config, redis);
+    server.model = require('./model')(config, client);
     require('./routes')(server, api, config, client, notifier);
     require('./handlers')(api, config, client);
     next(null, server);

@@ -166,6 +166,7 @@ module.exports = function (config, redis, notifier) {
     var usernameKey = keys.username(username);
     redis.get(usernameKey, function (err, user) {
       if (err) { return next(err); }
+      if (!user) { return next({statusCode: 404, message: 'User not found'}); }
       getUser(user, next);
     });
   };
@@ -175,8 +176,12 @@ module.exports = function (config, redis, notifier) {
    */
   var getUserByAltid = function (altid, next) {
     var altidKey = keys.useraltid(altid);
+    console.log('GETTING USER ' + altidKey);
     redis.get(altidKey, function (err, user) {
+      console.dir(err);
+      console.dir(user);
       if (err) { return next(err); }
+      if (!user) { return next({statusCode: 404, message: 'User not found'}); }
       getUser(user, next);
     });
   };
