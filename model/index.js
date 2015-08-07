@@ -171,6 +171,17 @@ module.exports = function (config, redis, notifier) {
   };
 
   /**
+   * Get user by altid
+   */
+  var getUserByAltid = function (altid, next) {
+    var altidKey = keys.useraltid(altid);
+    redis.get(altidKey, function (err, user) {
+      if (err) { return next(err); }
+      getUser(user, next);
+    });
+  };
+
+  /**
    * Get user state - we won't write notifications unless
    * the user has a bucket that isn't paused.
    */
@@ -324,6 +335,7 @@ module.exports = function (config, redis, notifier) {
     getUsers: getUsers,
     getUserState: getUserState,
     getUserByUsername: getUserByUsername,
+    getUserByAltid: getUserByAltid,
     addItem: addItem,
     resetViewState: resetViewState,
     addNotification: addNotification,
