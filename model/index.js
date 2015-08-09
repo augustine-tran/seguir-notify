@@ -280,7 +280,7 @@ module.exports = function (config, redis, notifier) {
    * notifications.
    */
   var notifyUser = function (user, next) {
-    getUser(user, function (err, userObject) {
+    getUserStatus(user, function (err, userObject) {
       if (err) { return next(err); }
       getNotificationsForUser(user, function (err, notifications) {
         if (err) { return next(err); }
