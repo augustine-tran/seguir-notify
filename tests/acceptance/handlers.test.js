@@ -5,7 +5,7 @@ var moment = require('moment');
 
 describe('Handlers and Model', function () {
 
-  var config = require('../../config')();
+  var config = require('../../config/config.json');
   var Redis = require('../../db/redis');
   var fixtures = require('../fixtures');
   var feed;
@@ -47,7 +47,6 @@ describe('Handlers and Model', function () {
     });
 
     it('can publish a feed-view event and observe the user state being initialised in redis', function (done) {
-
       var sample = fixtures['feed-view'][0];
       feed.view(sample, function (err, results) {
         expect(err).to.be(null);
@@ -57,11 +56,79 @@ describe('Handlers and Model', function () {
           done();
         });
       });
+    });
 
+    it('can retrieve a user by id', function (done) {
+      var sample = fixtures['feed-view'][0];
+      feed.view(sample, function (err, results) {
+        expect(err).to.be(null);
+        model.getUser(sample.user.user, function (err, user) {
+          expect(err).to.be(null);
+          expect(user.user).to.be(sample.user.user);
+          done();
+        });
+      });
+    });
+
+    it('can retrieve a user by altid', function (done) {
+      var sample = fixtures['feed-view'][0];
+      feed.view(sample, function (err, results) {
+        expect(err).to.be(null);
+        model.getUserByAltid(sample.user.altid, function (err, user) {
+          expect(err).to.be(null);
+          expect(user.user).to.be(sample.user.user);
+          done();
+        });
+      });
+    });
+
+    it('can retrieve a user by name', function (done) {
+      var sample = fixtures['feed-view'][0];
+      feed.view(sample, function (err, results) {
+        expect(err).to.be(null);
+        model.getUserByUsername(sample.user.username, function (err, user) {
+          expect(err).to.be(null);
+          expect(user.user).to.be(sample.user.user);
+          done();
+        });
+      });
+    });
+
+    it('can retrieve a user by name even if they have no userdata', function (done) {
+      var sample = fixtures['feed-view'][2];
+      feed.view(sample, function (err, results) {
+        expect(err).to.be(null);
+        model.getUserByUsername(sample.user.username, function (err, user) {
+          expect(err).to.be(null);
+          expect(user.user).to.be(sample.user.user);
+          expect(user.userdata).to.be('{}');
+          done();
+        });
+      });
+    });
+
+    it('get a 404 if I try and retrieve a user that doesnt exist by id', function (done) {
+      model.getUser('ABCD', function (err, user) {
+        expect(err.statusCode).to.be(404);
+        done();
+      });
+    });
+
+    it('get a 404 if I try and retrieve a user that doesnt exist by altid', function (done) {
+      model.getUserByAltid('ABCD', function (err, user) {
+        expect(err.statusCode).to.be(404);
+        done();
+      });
+    });
+
+    it('get a 404 if I try and retrieve a user that doesnt exist by username', function (done) {
+      model.getUserByUsername('ABCD', function (err, user) {
+        expect(err.statusCode).to.be(404);
+        done();
+      });
     });
 
     it('can publish a feed-add event but if the user hasnt ever viewed their feed it will not notify', function (done) {
-
       var sample = fixtures['feed-add'][0];
       feed.add(sample, function (err, results) {
         expect(err).to.be(null);
@@ -71,11 +138,9 @@ describe('Handlers and Model', function () {
           done();
         });
       });
-
     });
 
     it('can publish a feed-add event after a feed-view and you will see the notification in their feed', function (done) {
-
       var sample = fixtures['feed-add'][0];
       var sampleView = fixtures['feed-view'][1];
       feed.view(sampleView, function (err, results) {
@@ -89,7 +154,6 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
 
     it('can publish multiple feed-add events and observe the data in the right order', function (done) {
@@ -179,14 +243,12 @@ describe('Handlers and Model', function () {
     });
 
     it('can see user status for a user with notifications', function (done) {
-
       var sample = fixtures['feed-add'][0];
       model.getUserStatus(sample.user.user, function (err, status) {
         expect(err).to.be(null);
         expect(status.notifications).to.be(1);
         done();
       });
-
     });
 
     it('can publish a second feed-view event and see no notification data in redis', function (done) {
@@ -211,7 +273,6 @@ describe('Handlers and Model', function () {
     });
 
     it('can see user status for a user with a number of notifications', function (done) {
-
       var phteven = fixtures['feed-add'][0].user.user;
       async.map(fixtures['feed-add'], feed.add, function (err) {
         expect(err).to.be(null);
@@ -221,7 +282,6 @@ describe('Handlers and Model', function () {
           done();
         });
       });
-
     });
 
   });
@@ -245,7 +305,14 @@ describe('Handlers and Model', function () {
     it('can see users who should be notified in a given bucket', function (done) {
       model.getUsersForBucket(bucket1, function (err, users) {
         expect(err).to.be(null);
-        expect(users.length).to.be(2);
+        expect(users.length).to.be(3);
+        done();
+      });
+    });
+
+    it('get an empty array if I try and retrieve a bucket that doesnt exist', function (done) {
+      model.getUsersForBucket('BOB', function (err, users) {
+        expect(users.length).to.be(0);
         done();
       });
     });
@@ -259,7 +326,7 @@ describe('Handlers and Model', function () {
           expect(users.length).to.be(0);
           model.getUsersForBucket(bucket3, function (err, users) {
             expect(err).to.be(null);
-            expect(users.length).to.be(2);
+            expect(users.length).to.be(3);
             done();
           });
         });
@@ -267,7 +334,7 @@ describe('Handlers and Model', function () {
 
     });
 
-    it('can retrieve a list of active users', function (done) {
+    it('can retrieve a list of users who have pending notifications', function (done) {
       model.getUsers(function (err, users) {
         expect(err).to.be(null);
         expect(users.length).to.be(2);
@@ -284,7 +351,7 @@ describe('Handlers and Model', function () {
           expect(users.length).to.be(0);
           model.getUsersForBucket(bucket5, function (err, users) {
             expect(err).to.be(null);
-            expect(users.length).to.be(2);
+            expect(users.length).to.be(3);
             done();
           });
         });

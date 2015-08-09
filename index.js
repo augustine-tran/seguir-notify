@@ -59,7 +59,7 @@ function bootstrapServer (api, config, notifier, next) {
 /* istanbul ignore if */
 if (require.main === module) {
 
-  var config = require('./config')();
+  var config = require('./config/config.json');
   var notifier = function (user, notifications) {
     console.log('Notify [' + user.username + ']: ' + notifications && notifications.length);
   };

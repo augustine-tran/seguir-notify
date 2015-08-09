@@ -10,6 +10,7 @@ module.exports = {
   ],
   'feed-view': [
     require('./feed-view-1'),
-    require('./feed-view-2')
+    require('./feed-view-2'),
+    require('./feed-view-3')
   ]
 };

@@ -17,15 +17,13 @@ module.exports = function (config, redis, notifier) {
     var userKey = keys.user(user.user);
     var userNameKey = user.username ? keys.username(user.username) : null;
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
-    user.userdata = JSON.stringify(user.userdata);
+    user.userdata = JSON.stringify(user.userdata || {});
 
     var multiCmd = redis.multi()
-        .hmset(userKey, user);
-
-    if (userNameKey) multiCmd.set(userNameKey, user.user);
-    if (userAltidKey) multiCmd.set(userAltidKey, user.user);
-
-    multiCmd.exec(next);
+        .hmset(userKey, user)
+        .set(userNameKey, user.user)
+        .set(userAltidKey, user.user)
+        .exec(next);
 
   };
 
@@ -145,7 +143,11 @@ module.exports = function (config, redis, notifier) {
    */
   var getUser = function (user, next) {
     var userKey = keys.user(user);
-    redis.hgetall(userKey, next);
+    redis.hgetall(userKey, function (err, user) {
+      if (err) { return next(err); }
+      if (!user) { return next({statusCode: 404, message: 'User not found'}); }
+      next(null, user);
+    });
   };
 
   /**
@@ -176,10 +178,7 @@ module.exports = function (config, redis, notifier) {
    */
   var getUserByAltid = function (altid, next) {
     var altidKey = keys.useraltid(altid);
-    console.log('GETTING USER ' + altidKey);
     redis.get(altidKey, function (err, user) {
-      console.dir(err);
-      console.dir(user);
       if (err) { return next(err); }
       if (!user) { return next({statusCode: 404, message: 'User not found'}); }
       getUser(user, next);
@@ -211,6 +210,7 @@ module.exports = function (config, redis, notifier) {
       .llen(notifyKey)
       .exec(function (err, result) {
         if (err) { return next(err); }
+        if (!result[0]) { return next({statusCode: 404, message: 'User not found'}); }
         result[0].userdata = JSON.parse(result[0].userdata || '{}');
         result[0].state = result[1];
         result[0].notifications = result[2];

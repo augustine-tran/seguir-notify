@@ -14,15 +14,16 @@ module.exports = function client (config, next) {
   });
 
   redisClient.on('ready', function () {
-    // Do nothing - assume success unless proven otherwise
+
+    if (redisConfig.db) {
+      redisClient.select(redisConfig.db, function () {
+        next(null, redisClient);
+      });
+    } else {
+      next(null, redisClient);
+    }
+
   });
 
-  if (redisConfig.db) {
-    redisClient.select(redisConfig.db, function () {
-      next(null, redisClient);
-    });
-  } else {
-    next(null, redisClient);
-  }
 
 };
