@@ -250,7 +250,7 @@ module.exports = function (config, redis, notifier) {
       newObject = _.zipObject(fieldList, fields);
       if (newObject.data) newObject.data = JSON.parse(newObject.data);
       if (newObject[fieldList[0]]) { results.push(newObject); }
-    };
+    }
     return results;
   };
 
@@ -284,7 +284,7 @@ module.exports = function (config, redis, notifier) {
       if (err) { return next(err); }
       getNotificationsForUser(user, function (err, notifications) {
         if (err) { return next(err); }
-        notifier && notifier(userObject, notifications);
+        if (notifier) { notifier(userObject, notifications); }
         clearNotifications(user, function (err) {
           next(err, notifications.length);
         });
@@ -298,13 +298,12 @@ module.exports = function (config, redis, notifier) {
   var notifyUsersForBucket = function (bucket, next) {
     getUsersForBucket(bucket, function (err, users) {
       if (err) { return next(err); }
-      // TODO: Get a collection of all notifications
       async.map(users, notifyUser, function (err, result) {
         if (err) { return next(err); }
         async.map(users, updateViewStateAfterNotifying, function (err) {
           if (err) { return next(err); }
           next(null, {users: users.length, notifications: result});
-        });;
+        });
       });
     });
   };
