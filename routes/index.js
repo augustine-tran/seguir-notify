@@ -16,7 +16,7 @@ module.exports = function (server, api, config, redis, notifier) {
   server.get('/user/:user', function (req, res, cb) {
     model.getUserStatus(req.params.user, function (err, status) {
       if (err) { return cb(_error(err)); }
-      if (!status) { return cb(_error({statusCode: 404, message: 'User not found'})); }
+      if (!status) { return cb(_error({statusCode: 404, message: 'User with id \'' + req.params.user + '\' not found'})); }
       res.send(status);
     });
   });
@@ -24,7 +24,7 @@ module.exports = function (server, api, config, redis, notifier) {
   server.get('/useraltid/:altid', function (req, res, cb) {
     model.getUserByAltid(req.params.altid, function (err, user) {
       if (err) { return cb(_error(err)); }
-      if (!user) { return cb(_error({statusCode: 404, message: 'User not found'})); }
+      if (!user) { return cb(_error({statusCode: 404, message: 'User with altId \'' + req.params.altid + '\' not found'})); }
       model.getUserStatus(user.user, function (err, status) {
         if (err) { return cb(_error(err)); }
         res.send(status);
@@ -35,7 +35,7 @@ module.exports = function (server, api, config, redis, notifier) {
   server.get('/username/:username', function (req, res, cb) {
     model.getUserByUsername(req.params.username, function (err, user) {
       if (err) { return cb(_error(err)); }
-      if (!user) { return cb(_error({statusCode: 404, message: 'User not found'})); }
+      if (!user) { return cb(_error({statusCode: 404, message: 'User with username \'' + req.params.username + '\' not found'})); }
       model.getUserStatus(user.user, function (err, status) {
         if (err) { return cb(_error(err)); }
         res.send(status);
