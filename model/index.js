@@ -6,25 +6,21 @@ var DEFAULT_LIMIT = 20;
 var keys = require('./keys');
 
 module.exports = function (config, redis, notifier) {
-
   var NOTIFICATION_PERIODS = config.notify.periods || [1, 3, 5];
 
   /**
    * Adding a user ensures that the user exists in the notification db.
    */
   var addUser = function (user, next) {
-
     var userKey = keys.user(user.user);
     var userNameKey = user.username ? keys.username(user.username) : null;
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
     user.userdata = JSON.stringify(user.userdata || {});
-
-    var multiCmd = redis.multi()
-        .hmset(userKey, user)
-        .set(userNameKey, user.user)
-        .set(userAltidKey, user.user)
-        .exec(next);
-
+    redis.multi()
+      .hmset(userKey, user)
+      .set(userNameKey, user.user)
+      .set(userAltidKey, user.user)
+      .exec(next);
   };
 
   /**
@@ -42,7 +38,6 @@ module.exports = function (config, redis, notifier) {
    * Whenever a user views their feed move them into the right notification bucket
    */
   var moveUserNotificationBucket = function (user, state, next) {
-
     var isPaused = state.bucket_period === PAUSED;
     var nextBucket = isPaused ? null : getBucketKey(state.bucket_period, state.last_view);
     if (state.bucket_key && nextBucket === state.bucket_key) { return next(); }
@@ -71,18 +66,15 @@ module.exports = function (config, redis, notifier) {
       addToNewBucket,
       updateUserState
     ], next);
-
   };
 
   /**
    * Reset the view state after a view
    */
   var resetViewState = function (user, next) {
-
     var userViewStateKey = keys.viewState(user.user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
-
       if (err) { return next(err); }
       var current_date = moment().format();
 
@@ -105,9 +97,7 @@ module.exports = function (config, redis, notifier) {
         if (err) { return next(err); }
         moveUserNotificationBucket(user.user, state, next);
       });
-
     });
-
   };
 
   /**
@@ -115,11 +105,9 @@ module.exports = function (config, redis, notifier) {
    * This is reset if they view their feed.
    */
   var updateViewStateAfterNotifying = function (user, next) {
-
     var userViewStateKey = keys.viewState(user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
-
       if (err || !state) { return next(err || 'No state for user: ' + user); }
 
       state.bucket_period_index = +state.bucket_period_index + 1;
@@ -133,9 +121,7 @@ module.exports = function (config, redis, notifier) {
         if (err) { return next(err); }
         moveUserNotificationBucket(user, state, next);
       });
-
     });
-
   };
 
   /**
@@ -243,7 +229,9 @@ module.exports = function (config, redis, notifier) {
    * Convert the result from the SORT BY back into an array of items
    */
   var sortByToObject = function (fieldList, notifications) {
-    var fields, newObject, results = [];
+    var fields;
+    var newObject;
+    var results = [];
     while (notifications.length > 0) {
       fields = _.take(notifications, fieldList.length);
       notifications = _.drop(notifications, fieldList.length);
@@ -350,5 +338,4 @@ module.exports = function (config, redis, notifier) {
     notifyUsersForBucket: notifyUsersForBucket,
     getUserStatus: getUserStatus
   };
-
 };

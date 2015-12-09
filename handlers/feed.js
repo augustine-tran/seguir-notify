@@ -1,7 +1,6 @@
 var async = require('async');
 
 module.exports = function (config, redis) {
-
   var model = require('../model')(config, redis);
 
   var view = function (msg, next) {
@@ -34,5 +33,4 @@ module.exports = function (config, redis) {
     add: add,
     remove: remove
   };
-
 };

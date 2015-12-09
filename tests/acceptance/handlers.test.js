@@ -1,10 +1,9 @@
-/*eslint-env node, mocha */
+/* eslint-env node, mocha */
 var expect = require('expect.js');
 var async = require('async');
 var moment = require('moment');
 
 describe('Handlers and Model', function () {
-
   var config = require('../../config/config.json');
   var Redis = require('../../db/redis');
   var fixtures = require('../fixtures');
@@ -27,21 +26,16 @@ describe('Handlers and Model', function () {
   });
 
   describe('Basic Handlers', function () {
-
     it('Seguir notify redis client is working', function (done) {
-
       redis.ping(function (err, result) {
         expect(err).to.be(null);
         expect(result).to.be('PONG');
         done();
       });
-
     });
-
   });
 
   describe('Feed - view, add and remove', function () {
-
     beforeEach(function () {
       redis.flushdb();
     });
@@ -157,7 +151,6 @@ describe('Handlers and Model', function () {
     });
 
     it('can publish multiple feed-add events and observe the data in the right order', function (done) {
-
       var phteven = fixtures['feed-add'][0].user.user;
       var sampleView = fixtures['feed-view'][1];
 
@@ -175,11 +168,9 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
 
     it('can publish a feed-add event, then a feed-remove and see no notification in redis', function (done) {
-
       var sample = fixtures['feed-add'][1];
       var removeSample = fixtures['feed-remove'][0];
       var sampleView = fixtures['feed-view'][0];
@@ -203,19 +194,15 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
-
   });
 
   describe('Basic notifications and feed views', function () {
-
     before(function (done) {
       redis.flushdb(done);
     });
 
     it('can publish a feed-view event and see no notification data in redis', function (done) {
-
       var sample = fixtures['feed-view'][1];
       feed.view(sample, function (err) {
         expect(err).to.be(null);
@@ -225,11 +212,9 @@ describe('Handlers and Model', function () {
           done();
         });
       });
-
     });
 
     it('can publish a feed-add event and observe the data directly in redis', function (done) {
-
       var sample = fixtures['feed-add'][0];
       feed.add(sample, function (err) {
         expect(err).to.be(null);
@@ -239,7 +224,6 @@ describe('Handlers and Model', function () {
           done();
         });
       });
-
     });
 
     it('can see user status for a user with notifications', function (done) {
@@ -283,11 +267,9 @@ describe('Handlers and Model', function () {
         });
       });
     });
-
   });
 
   describe('Notifications and buckets', function () {
-
     before(function (done) {
       redis.flushdb(function () {
         async.map(fixtures['feed-view'], feed.view, done);
@@ -312,13 +294,13 @@ describe('Handlers and Model', function () {
 
     it('get an empty array if I try and retrieve a bucket that doesnt exist', function (done) {
       model.getUsersForBucket('BOB', function (err, users) {
+        expect(err).to.be(null);
         expect(users.length).to.be(0);
         done();
       });
     });
 
     it('after notifying users in a given bucket, they move out to the next one', function (done) {
-
       model.notifyUsersForBucket(bucket1, function (err) {
         expect(err).to.be(null);
         model.getUsersForBucket(bucket1, function (err, users) {
@@ -331,7 +313,6 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
 
     it('can retrieve a list of users who have pending notifications', function (done) {
@@ -343,7 +324,6 @@ describe('Handlers and Model', function () {
     });
 
     it('after notifying users again in a given bucket, they move out to the next one', function (done) {
-
       model.notifyUsersForBucket(bucket3, function (err) {
         expect(err).to.be(null);
         model.getUsersForBucket(bucket3, function (err, users) {
@@ -356,11 +336,9 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
 
     it('after notifying users again in the final bucket, they then become inert', function (done) {
-
       var phteven = fixtures['feed-add'][0].user.user;
       model.notifyUsersForBucket(bucket5, function (err) {
         expect(err).to.be(null);
@@ -375,9 +353,6 @@ describe('Handlers and Model', function () {
           });
         });
       });
-
     });
-
   });
-
 });

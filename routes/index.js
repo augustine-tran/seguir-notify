@@ -2,7 +2,6 @@ var restify = require('restify');
 var moment = require('moment');
 
 module.exports = function (server, api, config, redis, notifier) {
-
   var model = require('../model')(config, redis, notifier);
 
   function _error (err) {
@@ -41,7 +40,6 @@ module.exports = function (server, api, config, redis, notifier) {
         if (err) { return cb(_error(err)); }
         res.send(status);
       });
-
     });
   });
 
@@ -60,5 +58,4 @@ module.exports = function (server, api, config, redis, notifier) {
       res.send(status);
     });
   });
-
 };

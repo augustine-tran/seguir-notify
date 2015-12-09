@@ -1,5 +1,4 @@
 module.exports = function (api, config, redis) {
-
   var feed = require('./feed')(config, redis);
 
   api.messaging.listen('seguir-notify', function (msg, next) {
@@ -8,5 +7,4 @@ module.exports = function (api, config, redis) {
     if (msg.action === 'feed-remove') return feed.remove(msg, next);
     return next();
   });
-
 };

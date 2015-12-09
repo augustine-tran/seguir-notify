@@ -9,7 +9,6 @@ var defaultLogger = bunyan.createLogger({
 });
 
 function bootstrapServer (api, config, notifier, next) {
-
   var server = restify.createServer({
     name: 'seguir-notify',
     version: '0.1.0',
@@ -53,12 +52,10 @@ function bootstrapServer (api, config, notifier, next) {
     require('./handlers')(api, config, client);
     next(null, server);
   });
-
 }
 
 /* istanbul ignore if */
 if (require.main === module) {
-
   var config = require('./config/config.json');
   var notifier = function (user, notifications) {
     console.log('Notify [' + user.username + ']: ' + notifications && notifications.length);
@@ -75,7 +72,6 @@ if (require.main === module) {
       });
     });
   });
-
 } else {
   module.exports = function (config, notifier, next) {
     require('seguir')(config, function (err, api) {
