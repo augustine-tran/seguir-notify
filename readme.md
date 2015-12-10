@@ -108,7 +108,7 @@ Trigger a notification for the current hour.
 
 ### /notify/20150815:13
 
-Trigger a notification for a spefific bucket.
+Trigger a notification for a specific bucket.
 
 [http://localhost:4001/notify/20150815:13](http://localhost:4001/notify/20150815:13)
 
