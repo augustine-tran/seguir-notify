@@ -34,7 +34,7 @@
     "moment": "^2.9.0",
     "redis": "^0.12.1",
     "restify": "^3.0.3",
-    "seguir": "^0.13.1"
+    "seguir": "^0.13.2"
   },
   "devDependencies": {
     "apidoc": "^0.13.0",
