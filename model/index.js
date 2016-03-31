@@ -8,6 +8,14 @@ var keys = require('./keys');
 module.exports = function (config, redis, notifier) {
   var NOTIFICATION_PERIODS = config.notify.periods || [1, 3, 5];
 
+  var strip_null_properties = function (obj) {
+    var clone = Object.assign({}, obj);
+    for (var p in clone) {
+      if (!clone[p]) delete clone[p];
+    }
+    return clone;
+  };
+
   /**
    * Adding a user ensures that the user exists in the notification db.
    */
@@ -17,7 +25,7 @@ module.exports = function (config, redis, notifier) {
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
     user.userdata = JSON.stringify(user.userdata || {});
     redis.multi()
-      .hmset(userKey, user)
+      .hmset(userKey, strip_null_properties(user))
       .set(userNameKey, user.user)
       .set(userAltidKey, user.user)
       .exec(next);

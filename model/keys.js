@@ -20,6 +20,7 @@ module.exports = {
   'viewState': function (user) {
     return ['user', 'state', user].join(':');
   },
+  'users': 'users',
   BUCKET_KEY: 'bucket_key',
   BUCKET_PERIOD: 'bucket_period',
   BUCKET_PERIOD_INDEX: 'bucket_period_index'
