@@ -1,18 +1,12 @@
 var restify = require('restify');
-var bunyan = require('bunyan');
 var _ = require('lodash');
 var debug = require('debug')('seguir:notify');
-
-var defaultLogger = bunyan.createLogger({
-  name: 'seguir-notify',
-  serializers: restify.bunyan.serializers
-});
 
 function bootstrapServer (api, config, notifier, next) {
   var server = restify.createServer({
     name: 'seguir-notify',
     version: '0.1.0',
-    log: config.logger || defaultLogger
+    log: api.logger
   });
 
   // Default middleware
@@ -73,8 +67,11 @@ if (require.main === module) {
     });
   });
 } else {
-  module.exports = function (config, notifier, next) {
-    require('seguir')(config, function (err, api) {
+  module.exports = function (config, notifier, logger, statsd, next) {
+    if (!next) { next = statsd; statsd = undefined; }
+    if (!next) { next = logger; logger = undefined; }
+
+    require('seguir')(config, logger, statsd, function (err, api) {
       if (err) {
         return next(new Error('Unable to bootstrap API: ' + err.message));
       }
