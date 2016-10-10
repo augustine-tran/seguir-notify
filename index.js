@@ -1,5 +1,4 @@
 var restify = require('restify');
-var _ = require('lodash');
 var debug = require('debug')('seguir:notify');
 
 function bootstrapServer (api, config, notifier, next) {
@@ -19,18 +18,8 @@ function bootstrapServer (api, config, notifier, next) {
     cb();
   });
 
-  // Logging
-  server.on('after', function (request, response, route, error) {
-    var fn = error ? 'error' : 'info';
-    if (api.config.logging) {
-      request.log[fn]({req: request, res: response, route: route, err: error}, 'request');
-    }
-  });
-
   server.get('/status', function (req, res, cb) {
-    var statusConfig = _.clone(config);
-    delete statusConfig.logger;
-    res.send({status: 'OK', config: statusConfig});
+    res.send({status: 'OK'});
     cb();
   });
 
