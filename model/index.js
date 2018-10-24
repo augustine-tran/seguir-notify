@@ -8,7 +8,7 @@ var keys = require('./keys');
 module.exports = function (config, redis, notifier) {
   var NOTIFICATION_PERIODS = config.notify.periods || [1, 3, 5];
 
-  var strip_null_properties = function (obj) {
+  var stripNullProperties = function (obj) {
     var clone = Object.assign({}, obj);
     for (var p in clone) {
       if (!clone[p]) delete clone[p];
@@ -25,7 +25,7 @@ module.exports = function (config, redis, notifier) {
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
     user.userdata = JSON.stringify(user.userdata || {});
     redis.multi()
-      .hmset(userKey, strip_null_properties(user))
+      .hmset(userKey, stripNullProperties(user))
       .set(userNameKey, user.user)
       .set(userAltidKey, user.user)
       .exec(next);
@@ -84,11 +84,11 @@ module.exports = function (config, redis, notifier) {
 
     redis.hgetall(userViewStateKey, function (err, state) {
       if (err) { return next(err); }
-      var current_date = moment().format();
+      var currentDate = moment().format();
 
       state = state || {
-        last_view: current_date,
-        first_view: current_date,
+        last_view: currentDate,
+        first_view: currentDate,
         bucket_period_index: 0
       };
 
