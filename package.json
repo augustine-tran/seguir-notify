@@ -1,6 +1,6 @@
 {
   "name": "seguir-notify",
-  "version": "0.2.8",
+  "version": "1.0.0",
   "description": "Notification server for self-hosted social network backend and API",
   "main": "api/index.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "moment": "^2.9.0",
     "redis": "^2.6.0-0",
     "restify": "^4.3.2",
-    "seguir": "^0.13.11"
+    "seguir": "^1.0.2"
   },
   "devDependencies": {
     "apidoc": "^0.13.0",
