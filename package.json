@@ -11,9 +11,7 @@
     "worker": "node server/worker",
     "lint": "semistandard",
     "test": "istanbul cover _mocha -- --exit -b -R spec tests/acceptance/*",
-    "precommit": "semistandard",
-    "generate-changelog": "github-changes -n ${npm_package_version} --only-pulls --use-commit-body",
-    "version": "npm run generate-changelog && git add CHANGELOG.md"
+    "precommit": "semistandard"
   },
   "keywords": [
     "social",
@@ -45,7 +43,6 @@
     "apidoc": "^0.17.6",
     "casual": "^1.4.7",
     "expect.js": "^0.3.1",
-    "github-changes": "^1.1.2",
     "husky": "^0.8.1",
     "istanbul": "^0.4.5",
     "mocha": "^5.2.0",
