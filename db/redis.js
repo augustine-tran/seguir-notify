@@ -3,7 +3,7 @@ var redis = require('redis');
 
 module.exports = function client (config, next) {
   var redisConfig = config && config.notify ? config.notify : {};
-  redisConfig = _.defaults(config && config.notify || {}, { host: 'localhost', port: 6379, options: { } });
+  redisConfig = _.defaults((config && config.notify) || {}, { host: 'localhost', port: 6379, options: { } });
   var redisClient = redis.createClient(redisConfig.port, redisConfig.host, redisConfig.options);
 
   redisClient.on('error', function (err) {
