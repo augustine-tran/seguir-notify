@@ -5,7 +5,7 @@ var PAUSED = '_PAUSED_';
 var DEFAULT_LIMIT = 20;
 var keys = require('./keys');
 
-module.exports = function (config, redis, notifier) {
+module.exports = function (config, redis, notifier, logger) {
   var NOTIFICATION_PERIODS = config.notify.periods || [1, 3, 5];
 
   var stripNullProperties = function (obj) {
@@ -20,6 +20,7 @@ module.exports = function (config, redis, notifier) {
    * Adding a user ensures that the user exists in the notification db.
    */
   var addUser = function (user, next) {
+    logger.log('addUser: ' + user);
     var userKey = keys.user(user.user);
     var userNameKey = user.username ? keys.username(user.username) : null;
     var userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
@@ -69,6 +70,8 @@ module.exports = function (config, redis, notifier) {
       }
     };
 
+    logger.log('move user from bucket ' + state.bucket_key + ' to ' + nextBucket);
+
     async.parallel([
       removeFromOldBucket,
       addToNewBucket,
@@ -80,6 +83,7 @@ module.exports = function (config, redis, notifier) {
    * Reset the view state after a view
    */
   var resetViewState = function (user, next) {
+    logger.log('resetViewState: ' + user);
     var userViewStateKey = keys.viewState(user.user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
@@ -113,6 +117,7 @@ module.exports = function (config, redis, notifier) {
    * This is reset if they view their feed.
    */
   var updateViewStateAfterNotifying = function (user, next) {
+    logger.log('updateViewStateAfterNotifying: ' + user);
     var userViewStateKey = keys.viewState(user);
 
     redis.hgetall(userViewStateKey, function (err, state) {
@@ -184,6 +189,7 @@ module.exports = function (config, redis, notifier) {
    * the user has a bucket that isn't paused.
    */
   var getUserState = function (user, next) {
+    logger.log('getUserState: ' + user);
     var userViewStateKey = keys.viewState(user);
     redis.hget(userViewStateKey, keys.BUCKET_KEY, function (err, bucket) {
       if (err) { return next(err); }
@@ -195,6 +201,7 @@ module.exports = function (config, redis, notifier) {
    * Get a summary of current user state and data
    */
   var getUserStatus = function (user, next) {
+    logger.log('getUserStatus: ' + user);
     var userKey = keys.user(user);
     var notifyKey = keys.notify(user);
     var userViewStateKey = keys.viewState(user);
@@ -216,6 +223,7 @@ module.exports = function (config, redis, notifier) {
    * Persist an item that will form part of a notification
    */
   var addItem = function (item, data, next) {
+    logger.log('addItem: ' + item);
     var itemKey = keys.item(item.item);
     item.data = JSON.stringify(data);
     redis.hmset(itemKey, item, next);
@@ -225,6 +233,7 @@ module.exports = function (config, redis, notifier) {
    * Add an item to the notification list for a specific user, keep the list limited
    */
   var addNotification = function (user, item, next) {
+    logger.log('addNotification: ' + user + ' : ' + item);
     var notifyKey = keys.notify(user.user);
     redis.multi()
       .lpush(notifyKey, item.item)
@@ -276,6 +285,7 @@ module.exports = function (config, redis, notifier) {
    * notifications.
    */
   var notifyUser = function (user, next) {
+    logger.log('notifyUser: ' + user);
     getUserStatus(user, function (err, userObject) {
       if (err) { return next(err); }
       getNotificationsForUser(user, function (err, notifications) {
@@ -292,6 +302,7 @@ module.exports = function (config, redis, notifier) {
    * Notify all users currently active within a specific bucket.
    */
   var notifyUsersForBucket = function (bucket, next) {
+    logger.log('notifyUsersForBucket: ' + bucket);
     getUsersForBucket(bucket, function (err, users) {
       if (err) { return next(err); }
       async.map(users, notifyUser, function (err, result) {
@@ -309,6 +320,7 @@ module.exports = function (config, redis, notifier) {
    * pending users list.
    */
   var clearNotifications = function (user, next) {
+    logger.log('clearNotifications: ' + user);
     var notifyKey = keys.notify(user);
     redis.multi()
       .del(notifyKey)
@@ -320,6 +332,7 @@ module.exports = function (config, redis, notifier) {
    * Clear a specific item from a users notification list
    */
   var clearItem = function (user, item, next) {
+    logger.log('clearItem: ' + user + ' : ' + item);
     var itemKey = keys.item(item);
     var notifyKey = keys.notify(user);
     redis.multi()
