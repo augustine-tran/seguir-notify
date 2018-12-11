@@ -1,5 +1,5 @@
-module.exports = function (api, config, redis) {
-  var feed = require('./feed')(config, redis);
+module.exports = function (api, config, redis, notifier, logger) {
+  var feed = require('./feed')(config, redis, notifier, logger);
 
   api.messaging.listen('seguir-notify', function (msg, next) {
     if (msg.action === 'feed-view') return feed.view(msg, next);

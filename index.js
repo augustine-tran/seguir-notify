@@ -30,9 +30,9 @@ function bootstrapServer (api, config, notifier, logger, next) {
   var redis = require('./db/redis');
   redis(config, function (err, client) {
     if (err) { return next(err); }
-    server.model = require('./model')(config, client);
+    server.model = require('./model')(config, client, notifier, logger);
     require('./routes')(server, api, config, client, notifier, logger);
-    require('./handlers')(api, config, client);
+    require('./handlers')(api, config, client, notifier, logger);
     next(null, server);
   });
 }

@@ -16,11 +16,15 @@ describe('Handlers and Model', function () {
   var notifier = function (user, notifications) {
   };
 
+  var logger = {
+    log: function (message) {}
+  };
+
   before(function (done) {
     Redis(config, function (next, client) {
       redis = client;
-      model = require('../../model')(config, redis, notifier);
-      feed = require('../../handlers/feed')(config, redis);
+      model = require('../../model')(config, redis, notifier, logger);
+      feed = require('../../handlers/feed')(config, redis, notifier, logger);
       done();
     });
   });
