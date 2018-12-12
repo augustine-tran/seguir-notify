@@ -1,8 +1,8 @@
-var restify = require('restify');
-var debug = require('debug')('seguir:notify');
+const restify = require('restify');
+const debug = require('debug')('seguir:notify');
 
-function bootstrapServer (api, config, notifier, logger, next) {
-  var server = restify.createServer({
+const bootstrapServer = (api, config, notifier, logger, next) => {
+  const server = restify.createServer({
     name: 'seguir-notify',
     version: '0.1.0',
     log: api.logger
@@ -13,12 +13,12 @@ function bootstrapServer (api, config, notifier, logger, next) {
   server.use(restify.queryParser({mapParams: false}));
   server.use(restify.gzipResponse());
   server.use(restify.CORS());
-  server.use(function (req, res, cb) {
+  server.use((req, res, cb) => {
     debug(req.url, req.params, req.headers);
     cb();
   });
 
-  server.get('/status', function (req, res, cb) {
+  server.get('/status', (req, res, cb) => {
     res.send({status: 'OK'});
     cb();
   });
@@ -27,43 +27,43 @@ function bootstrapServer (api, config, notifier, logger, next) {
   server.pre(restify.pre.sanitizePath());
   server.pre(restify.pre.userAgentConnection());
 
-  var redis = require('./db/redis');
-  redis(config, function (err, client) {
+  const redis = require('./db/redis');
+  redis(config, (err, client) => {
     if (err) { return next(err); }
     server.model = require('./model')(config, client, notifier, logger);
     require('./routes')(server, api, config, client, notifier, logger);
     require('./handlers')(api, config, client, notifier, logger);
     next(null, server);
   });
-}
+};
 
 /* istanbul ignore if */
 if (require.main === module) {
-  var config = require('./config/config.json');
-  var notifier = function (user, notifications) {
+  const config = require('./config/config.json');
+  const notifier = (user, notifications) => {
     console.log('Notify [' + user.username + ']: ' + notifications && notifications.length);
   };
-  var logger = function (message) {
+  const logger = message => {
     console.log('Logger : ' + message);
   };
-  require('seguir')(config, function (err, api) {
+  require('seguir')(config, (err, api) => {
     if (err) { return process.exit(0); }
-    bootstrapServer(api, config, notifier, logger, function (err, server) {
+    bootstrapServer(api, config, notifier, logger, (err, server) => {
       if (err) {
         console.log('Unable to bootstrap server: ' + err.message);
         return;
       }
-      server.listen(config.port || 3000, function () {
+      server.listen(config.port || 3000, () => {
         console.log('Server %s listening at %s', server.name, server.url);
       });
     });
   });
 } else {
-  module.exports = function (config, notifier, logger, statsd, next) {
+  module.exports = (config, notifier, logger, statsd, next) => {
     if (!next) { next = statsd; statsd = undefined; }
     if (!next) { next = logger; logger = undefined; }
 
-    require('seguir')(config, logger, statsd, function (err, api) {
+    require('seguir')(config, logger, statsd, (err, api) => {
       if (err) {
         return next(new Error('Unable to bootstrap API: ' + err.message));
       }

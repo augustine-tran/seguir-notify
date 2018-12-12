@@ -1,25 +1,11 @@
 module.exports = {
-  'user': function (user) {
-    return ['user', user].join(':');
-  },
-  'username': function (username) {
-    return ['username', username].join(':');
-  },
-  'useraltid': function (altid) {
-    return ['useraltid', altid].join(':');
-  },
-  'item': function (item) {
-    return ['item', item].join(':');
-  },
-  'notify': function (user) {
-    return ['notify', user].join(':');
-  },
-  'notifyBucket': function (date) {
-    return ['notify', 'bucket', date].join(':');
-  },
-  'viewState': function (user) {
-    return ['user', 'state', user].join(':');
-  },
+  'user': user => ['user', user].join(':'),
+  'username': username => ['username', username].join(':'),
+  'useraltid': altid => ['useraltid', altid].join(':'),
+  'item': item => ['item', item].join(':'),
+  'notify': user => ['notify', user].join(':'),
+  'notifyBucket': date => ['notify', 'bucket', date].join(':'),
+  'viewState': user => ['user', 'state', user].join(':'),
   'users': 'users',
   BUCKET_KEY: 'bucket_key',
   BUCKET_PERIOD: 'bucket_period',

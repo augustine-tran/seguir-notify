@@ -1,9 +1,9 @@
-var async = require('async');
+const async = require('async');
 
-module.exports = function (config, redis, notifier, logger) {
-  var model = require('../model')(config, redis, notifier, logger);
+module.exports = (config, redis, notifier, logger) => {
+  const model = require('../model')(config, redis, notifier, logger);
 
-  var view = function (msg, next) {
+  const view = (msg, next) => {
     async.parallel([
       async.apply(model.addUser, msg.user),
       async.apply(model.resetViewState, msg.user),
@@ -11,8 +11,8 @@ module.exports = function (config, redis, notifier, logger) {
     ], next);
   };
 
-  var add = function (msg, next) {
-    model.getUserState(msg.user.user, function (err, active) {
+  const add = (msg, next) => {
+    model.getUserState(msg.user.user, (err, active) => {
       if (err) { return next(err); }
       if (!active) { return next(null); }
       async.parallel([
@@ -22,15 +22,15 @@ module.exports = function (config, redis, notifier, logger) {
     });
   };
 
-  var remove = function (msg, next) {
+  const remove = (msg, next) => {
     async.parallel([
       async.apply(model.clearItem, msg.user.user, msg.item.item)
     ], next);
   };
 
   return {
-    view: view,
-    add: add,
-    remove: remove
+    view,
+    add,
+    remove
   };
 };
