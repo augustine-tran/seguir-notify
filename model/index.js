@@ -20,7 +20,7 @@ module.exports = (config, redis, notifier, logger) => {
    * Adding a user ensures that the user exists in the notification db.
    */
   const addUser = (user, next) => {
-    logger.log('addUser: ' + user);
+    logger.log('addUser: ' + user.user);
     const userKey = keys.user(user.user);
     const userNameKey = user.username ? keys.username(user.username) : null;
     const userAltidKey = user.altid ? keys.useraltid(user.altid) : null;
@@ -91,7 +91,7 @@ module.exports = (config, redis, notifier, logger) => {
    * Reset the view state after a view
    */
   const resetViewState = (user, next) => {
-    logger.log('resetViewState: ' + user);
+    logger.log('resetViewState: ' + user.user);
     const userViewStateKey = keys.viewState(user.user);
 
     redis.hgetall(userViewStateKey, (err, state) => {
