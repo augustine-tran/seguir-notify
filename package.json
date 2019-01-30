@@ -1,6 +1,10 @@
 {
   "name": "seguir-notify",
+<<<<<<< HEAD
   "version": "1.0.11",
+=======
+  "version": "1.0.10",
+>>>>>>> ea98eaaa85e74aa19db473d23d18e94d1b88bb62
   "engines": {
     "node": ">=8"
   },
