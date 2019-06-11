@@ -1,8 +1,8 @@
 const restify = require('restify');
 const moment = require('moment');
 
-module.exports = (server, api, config, redis, notifier, logger) => {
-  const model = require('../model')(config, redis, notifier, logger);
+module.exports = (server, api, config, redis, notifier) => {
+  const model = require('../model')(config, redis, notifier);
 
   const _error = (err) => new restify.HttpError(err);
 

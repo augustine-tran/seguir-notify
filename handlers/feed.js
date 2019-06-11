@@ -1,7 +1,7 @@
 const async = require('async');
 
-module.exports = (config, redis, notifier, logger) => {
-  const model = require('../model')(config, redis, notifier, logger);
+module.exports = (config, redis, notifier) => {
+  const model = require('../model')(config, redis, notifier);
 
   const view = (msg, next) => {
     async.parallel([

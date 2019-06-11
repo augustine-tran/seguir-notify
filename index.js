@@ -1,7 +1,7 @@
 const restify = require('restify');
 const debug = require('debug')('seguir:notify');
 
-const bootstrapServer = (api, config, notifier, logger, next) => {
+const bootstrapServer = (api, config, notifier, next) => {
   const server = restify.createServer({
     name: 'seguir-notify',
     version: '0.1.0',
@@ -30,9 +30,9 @@ const bootstrapServer = (api, config, notifier, logger, next) => {
   const redis = require('./db/redis');
   redis(config, (err, client) => {
     if (err) { return next(err); }
-    server.model = require('./model')(config, client, notifier, logger);
-    require('./routes')(server, api, config, client, notifier, logger);
-    require('./handlers')(api, config, client, notifier, logger);
+    server.model = require('./model')(config, client, notifier);
+    require('./routes')(server, api, config, client, notifier);
+    require('./handlers')(api, config, client, notifier);
     next(null, server);
   });
 };
@@ -43,12 +43,9 @@ if (require.main === module) {
   const notifier = (user, notifications) => {
     console.log('Notify [' + user.username + ']: ' + notifications && notifications.length);
   };
-  const logger = message => {
-    console.log('Logger : ' + message);
-  };
   require('seguir')(config, (err, api) => {
     if (err) { return process.exit(0); }
-    bootstrapServer(api, config, notifier, logger, (err, server) => {
+    bootstrapServer(api, config, notifier, (err, server) => {
       if (err) {
         console.log('Unable to bootstrap server: ' + err.message);
         return;
@@ -67,7 +64,7 @@ if (require.main === module) {
       if (err) {
         return next(new Error('Unable to bootstrap API: ' + err.message));
       }
-      return bootstrapServer(api, config, notifier, logger, next);
+      return bootstrapServer(api, config, notifier, next);
     });
   };
 }

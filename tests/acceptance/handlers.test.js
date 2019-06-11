@@ -14,15 +14,11 @@ describe('Handlers and Model', () => {
   const notifier = (user, notifications) => {
   };
 
-  const logger = {
-    log: (message) => {}
-  };
-
   before((done) => {
     Redis(config, (next, client) => {
       redis = client;
-      model = require('../../model')(config, redis, notifier, logger);
-      feed = require('../../handlers/feed')(config, redis, notifier, logger);
+      model = require('../../model')(config, redis, notifier);
+      feed = require('../../handlers/feed')(config, redis, notifier);
       done();
     });
   });
